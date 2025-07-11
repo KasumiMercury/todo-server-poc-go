@@ -119,19 +119,30 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	var req TaskCreate
+	var req TaskUpdate
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "invalid request body: " + err.Error()})
 		return
 	}
 
-	if req.Name == "" {
-		c.JSON(400, gin.H{"error": "name must not be empty"})
+	task, err := t.controller.GetTaskById(c.Request.Context(), taskId)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "failed to get task: " + err.Error()})
 		return
 	}
 
-	task, err := t.controller.UpdateTask(c.Request.Context(), taskId, req.Name)
+	if task == nil {
+		c.JSON(404, gin.H{"error": "task not found"})
+		return
+	}
+
+	name := task.Title()
+	if req.Name != nil {
+		name = *req.Name
+	}
+
+	task, err = t.controller.UpdateTask(c.Request.Context(), taskId, name)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to update task: " + err.Error()})
 		return
