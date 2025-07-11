@@ -23,3 +23,6 @@
 # ...even if they are in subdirectories
 !*/
 
+# for OpenAPI
+!schema
+!cfg.yaml
