@@ -22,13 +22,12 @@ func (t *TaskServer) TaskCreateTask(c *gin.Context) {}
 func (t *TaskServer) TaskDeleteTask(c *gin.Context, taskId string) {}
 
 func (t *TaskServer) TaskGetTask(c *gin.Context, taskId string) {
-	id := c.Param("id")
-	if id == "" {
+	if taskId == "" {
 		c.JSON(400, gin.H{"error": "ID must not be empty"})
 		return
 	}
 
-	task, err := t.controller.GetTaskById(c.Request.Context(), id)
+	task, err := t.controller.GetTaskById(c.Request.Context(), taskId)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to get task by ID: " + err.Error()})
 		return
