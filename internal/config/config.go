@@ -19,7 +19,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
+			Host:     getEnv("DB_HOST", "postgres"),
 			Port:     getEnv("DB_PORT", "5432"),
 			User:     getEnv("DB_USER", "user"),
 			Password: getEnv("DB_PASSWORD", "password"),

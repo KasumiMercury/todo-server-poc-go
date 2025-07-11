@@ -41,21 +41,19 @@ func (t *TaskServer) TaskGetAllTasks(c *gin.Context) {
 }
 
 func (t *TaskServer) TaskCreateTask(c *gin.Context) {
-	var req struct {
-		Title string `json:"title"`
-	}
+	var req TaskCreate
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "invalid request body: " + err.Error()})
 		return
 	}
 
-	if req.Title == "" {
-		c.JSON(400, gin.H{"error": "title must not be empty"})
+	if req.Name == "" {
+		c.JSON(400, gin.H{"error": "name must not be empty"})
 		return
 	}
 
-	task, err := t.controller.CreateTask(c.Request.Context(), req.Title)
+	task, err := t.controller.CreateTask(c.Request.Context(), req.Name)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to create task: " + err.Error()})
 		return
@@ -121,21 +119,19 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	var req struct {
-		Title string `json:"title"`
-	}
+	var req TaskCreate
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": "invalid request body: " + err.Error()})
 		return
 	}
 
-	if req.Title == "" {
-		c.JSON(400, gin.H{"error": "title must not be empty"})
+	if req.Name == "" {
+		c.JSON(400, gin.H{"error": "name must not be empty"})
 		return
 	}
 
-	task, err := t.controller.UpdateTask(c.Request.Context(), taskId, req.Title)
+	task, err := t.controller.UpdateTask(c.Request.Context(), taskId, req.Name)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to update task: " + err.Error()})
 		return
