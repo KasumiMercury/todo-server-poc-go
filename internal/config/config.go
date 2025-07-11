@@ -26,7 +26,7 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			Name:     getEnv("DB_NAME", "taskdb"),
 		},
-		JWTSecret: getEnv("JWT_SECRET", "your-secret-key-for-testing"),
+		JWTSecret: getEnv("JWT_SECRET", "secret-key-for-testing"),
 	}
 }
 
