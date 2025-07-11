@@ -15,7 +15,7 @@ import (
 
 func main() {
 	cfg := config.Load()
-	
+
 	db, err := initDB(cfg.Database)
 	if err != nil {
 		log.Fatal("Failed to initialize database:", err)
@@ -30,7 +30,13 @@ func main() {
 		*taskController,
 	)
 
-	handler.RegisterHandlers(router, taskServer)
+	// Register handlers with JWT middleware
+	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+	handler.RegisterHandlersWithOptions(router, taskServer, handler.GinServerOptions{
+		Middlewares: []handler.MiddlewareFunc{
+			handler.MiddlewareFunc(jwtMiddleware),
+		},
+	})
 
 	if err := router.Run(":8080"); err != nil {
 		panic("Failed to start server: " + err.Error())

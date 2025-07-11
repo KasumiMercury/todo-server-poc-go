@@ -13,7 +13,8 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Database DatabaseConfig
+	Database  DatabaseConfig
+	JWTSecret string
 }
 
 func Load() *Config {
@@ -25,6 +26,7 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			Name:     getEnv("DB_NAME", "taskdb"),
 		},
+		JWTSecret: getEnv("JWT_SECRET", "your-secret-key-for-testing"),
 	}
 }
 
