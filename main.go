@@ -13,13 +13,11 @@ func main() {
 	taskRepo := repository.NewTask()
 	taskController := controller.NewTask(*taskRepo)
 
-	taskHandler := handler.NewTask(*taskController)
-	rootHandler := handler.NewRoot(
-		router,
-		taskHandler,
+	taskServer := handler.NewTaskServer(
+		*taskController,
 	)
 
-	rootHandler.RegisterRoutes()
+	handler.RegisterHandlers(router, taskServer)
 
 	if err := router.Run(":8080"); err != nil {
 		panic("Failed to start server: " + err.Error())
