@@ -26,3 +26,8 @@
 # for OpenAPI
 !schema
 !cfg.yaml
+
+# for dev
+!.air.toml
+!Dockerfile
+!compose.yaml
