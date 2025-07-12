@@ -62,6 +62,9 @@ func setupTestRouter() *gin.Engine {
 
 	router := gin.New()
 
+	// Add CORS middleware globally
+	router.Use(handler.CORSMiddleware())
+
 	cfg := &config.Config{
 		JWTSecret: "secret-key-for-testing",
 	}
@@ -167,6 +170,40 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 
 		if w.Code != http.StatusNoContent {
 			t.Errorf("Expected status %d, got %d", http.StatusNoContent, w.Code)
+		}
+	})
+}
+
+func TestCORSOptionsEndpoint(t *testing.T) {
+	router := setupTestRouter()
+
+	t.Run("OPTIONS /tasks should return CORS headers without authentication", func(t *testing.T) {
+		req, _ := http.NewRequest("OPTIONS", "/tasks", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+		}
+
+		expectedOrigin := "http://localhost:5173"
+		if origin := w.Header().Get("Access-Control-Allow-Origin"); origin != expectedOrigin {
+			t.Errorf("Expected Access-Control-Allow-Origin %s, got %s", expectedOrigin, origin)
+		}
+
+		expectedHeaders := "Authorization, Content-Type"
+		if headers := w.Header().Get("Access-Control-Allow-Headers"); headers != expectedHeaders {
+			t.Errorf("Expected Access-Control-Allow-Headers %s, got %s", expectedHeaders, headers)
+		}
+
+		expectedMethods := "GET, POST, PUT, DELETE, OPTIONS"
+		if methods := w.Header().Get("Access-Control-Allow-Methods"); methods != expectedMethods {
+			t.Errorf("Expected Access-Control-Allow-Methods %s, got %s", expectedMethods, methods)
+		}
+
+		expectedMaxAge := "86400"
+		if maxAge := w.Header().Get("Access-Control-Max-Age"); maxAge != expectedMaxAge {
+			t.Errorf("Expected Access-Control-Max-Age %s, got %s", expectedMaxAge, maxAge)
 		}
 	})
 }
