@@ -38,12 +38,12 @@ func (t *Task) GetAllTasks(ctx context.Context) ([]*domain.Task, error) {
 	return tasks, nil
 }
 
-func (t *Task) CreateTask(ctx context.Context, title string) (*domain.Task, error) {
-	if title == "" {
-		panic("Title must not be empty")
+func (t *Task) CreateTask(ctx context.Context, name string) (*domain.Task, error) {
+	if name == "" {
+		panic("Name must not be empty")
 	}
 
-	task, err := t.taskRepo.Create(ctx, title)
+	task, err := t.taskRepo.Create(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -64,15 +64,15 @@ func (t *Task) DeleteTask(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *Task) UpdateTask(ctx context.Context, id, title string) (*domain.Task, error) {
+func (t *Task) UpdateTask(ctx context.Context, id, name string) (*domain.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}
-	if title == "" {
-		panic("Title must not be empty")
+	if name == "" {
+		panic("Name must not be empty")
 	}
 
-	task, err := t.taskRepo.Update(ctx, id, title)
+	task, err := t.taskRepo.Update(ctx, id, name)
 	if err != nil {
 		return nil, err
 	}

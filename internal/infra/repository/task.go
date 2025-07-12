@@ -9,9 +9,9 @@ import (
 type TaskRepository interface {
 	FindById(ctx context.Context, id string) (*domain.Task, error)
 	FindAll(ctx context.Context) ([]*domain.Task, error)
-	Create(ctx context.Context, title string) (*domain.Task, error)
+	Create(ctx context.Context, name string) (*domain.Task, error)
 	Delete(ctx context.Context, id string) error
-	Update(ctx context.Context, id, title string) (*domain.Task, error)
+	Update(ctx context.Context, id, name string) (*domain.Task, error)
 }
 
 //type TaskMemory struct{}

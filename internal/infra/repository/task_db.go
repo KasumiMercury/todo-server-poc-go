@@ -11,7 +11,7 @@ import (
 
 type TaskModel struct {
 	ID        string    `gorm:"primaryKey;type:varchar(36)"`
-	Title     string    `gorm:"not null;type:varchar(255)"`
+	Name      string    `gorm:"not null;type:varchar(255)"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
@@ -21,13 +21,13 @@ func (TaskModel) TableName() string {
 }
 
 func (t *TaskModel) ToDomain() *domain.Task {
-	return domain.NewTask(t.ID, t.Title)
+	return domain.NewTask(t.ID, t.Name)
 }
 
 func NewTaskModelFromDomain(task *domain.Task) *TaskModel {
 	return &TaskModel{
-		ID:    task.ID(),
-		Title: task.Title(),
+		ID:   task.ID(),
+		Name: task.Name(),
 	}
 }
 
@@ -69,14 +69,14 @@ func (t *TaskDB) FindAll(ctx context.Context) ([]*domain.Task, error) {
 	return tasks, nil
 }
 
-func (t *TaskDB) Create(ctx context.Context, title string) (*domain.Task, error) {
-	if title == "" {
-		panic("Title must not be empty")
+func (t *TaskDB) Create(ctx context.Context, name string) (*domain.Task, error) {
+	if name == "" {
+		panic("Name must not be empty")
 	}
 
 	taskModel := &TaskModel{
-		ID:    uuid.New().String(),
-		Title: title,
+		ID:   uuid.New().String(),
+		Name: name,
 	}
 
 	if err := t.db.WithContext(ctx).Create(taskModel).Error; err != nil {
@@ -99,12 +99,12 @@ func (t *TaskDB) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *TaskDB) Update(ctx context.Context, id, title string) (*domain.Task, error) {
+func (t *TaskDB) Update(ctx context.Context, id, name string) (*domain.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}
-	if title == "" {
-		panic("Title must not be empty")
+	if name == "" {
+		panic("Name must not be empty")
 	}
 
 	var taskModel TaskModel
@@ -112,7 +112,7 @@ func (t *TaskDB) Update(ctx context.Context, id, title string) (*domain.Task, er
 		return nil, err
 	}
 
-	taskModel.Title = title
+	taskModel.Name = name
 	if err := t.db.WithContext(ctx).Save(&taskModel).Error; err != nil {
 		return nil, err
 	}

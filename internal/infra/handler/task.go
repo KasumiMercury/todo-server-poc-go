@@ -22,18 +22,12 @@ func (t *TaskServer) TaskGetAllTasks(c *gin.Context) {
 		return
 	}
 
-	var res []struct {
-		Id    string `json:"id"`
-		Title string `json:"title"`
-	}
+	var res []Task
 
 	for _, task := range tasks {
-		res = append(res, struct {
-			Id    string `json:"id"`
-			Title string `json:"title"`
-		}{
-			Id:    task.ID(),
-			Title: task.Title(),
+		res = append(res, Task{
+			Id:   task.ID(),
+			Name: task.Name(),
 		})
 	}
 
@@ -59,12 +53,9 @@ func (t *TaskServer) TaskCreateTask(c *gin.Context) {
 		return
 	}
 
-	res := struct {
-		Id    string `json:"id"`
-		Title string `json:"title"`
-	}{
-		Id:    task.ID(),
-		Title: task.Title(),
+	res := Task{
+		Id:   task.ID(),
+		Name: task.Name(),
 	}
 
 	c.JSON(201, res)
@@ -102,12 +93,9 @@ func (t *TaskServer) TaskGetTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	res := struct {
-		Id    string `json:"id"`
-		Title string `json:"title"`
-	}{
-		Id:    task.ID(),
-		Title: task.Title(),
+	res := Task{
+		Id:   task.ID(),
+		Name: task.Name(),
 	}
 
 	c.JSON(200, res)
@@ -137,7 +125,7 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	name := task.Title()
+	name := task.Name()
 	if req.Name != nil {
 		name = *req.Name
 	}
@@ -148,12 +136,9 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	res := struct {
-		Id    string `json:"id"`
-		Title string `json:"title"`
-	}{
-		Id:    task.ID(),
-		Title: task.Title(),
+	res := Task{
+		Id:   task.ID(),
+		Name: task.Name(),
 	}
 
 	c.JSON(200, res)

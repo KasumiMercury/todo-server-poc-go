@@ -1,14 +1,14 @@
 package domain
 
 type Task struct {
-	id    string
-	title string
+	id   string
+	name string
 }
 
-func NewTask(id, title string) *Task {
+func NewTask(id, name string) *Task {
 	return &Task{
-		id:    id,
-		title: title,
+		id:   id,
+		name: name,
 	}
 }
 
@@ -16,6 +16,6 @@ func (t *Task) ID() string {
 	return t.id
 }
 
-func (t *Task) Title() string {
-	return t.title
+func (t *Task) Name() string {
+	return t.name
 }
