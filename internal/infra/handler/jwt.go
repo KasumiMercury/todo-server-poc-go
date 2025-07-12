@@ -14,29 +14,23 @@ func JWTMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Authorization header is required",
-			})
+			details := "Authorization header is required"
+			c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			c.Abort()
 			return
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Authorization header must start with 'Bearer '",
-			})
+			details := "Authorization header must start with 'Bearer '"
+			c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			c.Abort()
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Token is required",
-			})
+			details := "Token is required"
+			c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			c.Abort()
 			return
 		}
@@ -50,19 +44,15 @@ func JWTMiddleware(secretKey string) gin.HandlerFunc {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Invalid token: " + err.Error(),
-			})
+			details := "Invalid token: " + err.Error()
+			c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			c.Abort()
 			return
 		}
 
 		if !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Token is not valid",
-			})
+			details := "Token is not valid"
+			c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			c.Abort()
 			return
 		}
