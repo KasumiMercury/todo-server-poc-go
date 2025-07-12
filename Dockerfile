@@ -1,4 +1,4 @@
-FROM golang:1.24.5-alpine as builder
+FROM golang:1.24.5-alpine AS builder
 
 RUN apk update
 
@@ -9,13 +9,13 @@ RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/main
 
-FROM gcr.io/distroless/static-debian12 as runner
+FROM gcr.io/distroless/static-debian12 AS runner
 
 COPY --from=builder /app/main /
 
-CMD ["/app/main"]
+CMD ["/main"]
 
-FROM golang:1.24.5-alpine as dev
+FROM golang:1.24.5-alpine AS dev
 
 ENV CGO_ENABLED 0
 ENV GO111MODULE auto
