@@ -31,3 +31,5 @@
 !.air.toml
 !Dockerfile
 !compose.yaml
+
+!.github/**/*
