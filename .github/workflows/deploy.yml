@@ -12,8 +12,9 @@ jobs:
       id-token: 'write'
     
     env:
-      IMAGE: asia.gcr.io/${{ secrets.GCP_PROJECT_ID_PRD }}/todo_poc:${{ github.sha }}
-      GCP_REGION: asia-northeast1
+      GCP_SERVICE_NAME: todo-poc-cloud-run
+      GCP_REGION: asia-northeast2
+      ARTIFACT_REPO_ID: ${{ secrets.GCP_ARTIFACT_REPO_ID }}
 
     steps:
       - name: Checkout the repository
@@ -25,27 +26,17 @@ jobs:
           service_account: "${{ secrets.SERVICE_ACCOUNT_EMAIL }}"
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      - name: Authorize Docker push
-        run: gcloud auth configure-docker
-      - name: Build a docker image
-        run: docker build -t ${{ env.IMAGE }} -f Dockerfile .
-      - name: Push the docker image
-        run: docker push ${{ env.IMAGE }}
-      - name: Deploy to Cloud Run
-        id: deploy
-        uses: google-github-actions/deploy-cloudrun@v0
-        with:
-          service: todo-poc-cloud-run
-          image: ${{ env.IMAGE }}
-          region: ${{ env.GCP_REGION }}
-      - name: Clean up Container images
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+      - name: 'Build and Push Container Image'
         run: |
-          gcloud container images list-tags "${BASE_IMAGE}" \
-            --filter="NOT tags:${GITHUB_SHA}" --format="get(digest)" | \
-          while read digest
-          do
-            gcloud container images delete -q --force-delete-tags "${BASE_IMAGE}@$digest"
-          done
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          BASE_IMAGE: asia.gcr.io/${{ secrets.GCP_PROJECT_ID_PRD }}/todo_poc
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.sha }}"
+          
+          docker build -t $IMAGE_PATH .
+          docker push $IMAGE_PATH
+      - name: 'Deploy to Cloud Run'
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.GCP_SERVICE_NAME }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.sha }}
