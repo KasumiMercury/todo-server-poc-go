@@ -30,7 +30,7 @@ jobs:
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
       - name: 'Build and Push Container Image'
         run: |
-          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.sha }}"
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.sha }}"
           
           docker build -t $IMAGE_PATH .
           docker push $IMAGE_PATH
