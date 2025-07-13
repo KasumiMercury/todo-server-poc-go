@@ -10,6 +10,10 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
+    
+    env:
+      IMAGE: asia.gcr.io/${{ secrets.GCP_PROJECT_ID_PRD }}/hello_cloudrun:${{ github.sha }}
+      GCP_REGION: asia-northeast1
 
     steps:
       - name: Checkout the repository
