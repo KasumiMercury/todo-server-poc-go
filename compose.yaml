@@ -9,7 +9,7 @@ services:
     ports:
       - "8080:8080"
   postgres:
-    image: postgres:15
+    image: postgres:17
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
