@@ -2,15 +2,15 @@ package controller
 
 import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/repository"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/task"
 	"golang.org/x/net/context"
 )
 
 type Task struct {
-	taskRepo repository.TaskRepository
+	taskRepo task.TaskRepository
 }
 
-func NewTask(taskRepo repository.TaskRepository) *Task {
+func NewTask(taskRepo task.TaskRepository) *Task {
 	return &Task{
 		taskRepo: taskRepo,
 	}

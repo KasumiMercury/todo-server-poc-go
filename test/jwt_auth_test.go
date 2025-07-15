@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/task"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,9 +75,9 @@ func setupTestRouter() *gin.Engine {
 	taskServer := handler.NewTaskServer(*taskController)
 
 	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
-	handler.RegisterHandlersWithOptions(router, taskServer, handler.GinServerOptions{
-		Middlewares: []handler.MiddlewareFunc{
-			handler.MiddlewareFunc(jwtMiddleware),
+	task.RegisterHandlersWithOptions(router, taskServer, task.GinServerOptions{
+		Middlewares: []task.MiddlewareFunc{
+			task.MiddlewareFunc(jwtMiddleware),
 		},
 	})
 

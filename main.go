@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/task"
 	"log"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
@@ -35,9 +36,9 @@ func main() {
 
 	// Register handlers with JWT middleware
 	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
-	handler.RegisterHandlersWithOptions(router, taskServer, handler.GinServerOptions{
-		Middlewares: []handler.MiddlewareFunc{
-			handler.MiddlewareFunc(jwtMiddleware),
+	task.RegisterHandlersWithOptions(router, taskServer, task.GinServerOptions{
+		Middlewares: []task.MiddlewareFunc{
+			task.MiddlewareFunc(jwtMiddleware),
 		},
 	})
 
