@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
-package: handler
+package: generated
 generate:
   gin-server: true
   models: true
   embedded-spec: true
-output: ./internal/infra/handler/task.gen.go
+output: ./internal/infra/handler/generated/task.gen.go

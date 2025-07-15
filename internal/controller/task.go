@@ -1,22 +1,21 @@
 package controller
 
 import (
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/repository"
+	task2 "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"golang.org/x/net/context"
 )
 
 type Task struct {
-	taskRepo repository.TaskRepository
+	taskRepo task2.TaskRepository
 }
 
-func NewTask(taskRepo repository.TaskRepository) *Task {
+func NewTask(taskRepo task2.TaskRepository) *Task {
 	return &Task{
 		taskRepo: taskRepo,
 	}
 }
 
-func (t *Task) GetTaskById(ctx context.Context, id string) (*domain.Task, error) {
+func (t *Task) GetTaskById(ctx context.Context, id string) (*task2.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -29,7 +28,7 @@ func (t *Task) GetTaskById(ctx context.Context, id string) (*domain.Task, error)
 	return task, nil
 }
 
-func (t *Task) GetAllTasks(ctx context.Context) ([]*domain.Task, error) {
+func (t *Task) GetAllTasks(ctx context.Context) ([]*task2.Task, error) {
 	tasks, err := t.taskRepo.FindAll(ctx)
 	if err != nil {
 		return nil, err
@@ -38,7 +37,7 @@ func (t *Task) GetAllTasks(ctx context.Context) ([]*domain.Task, error) {
 	return tasks, nil
 }
 
-func (t *Task) CreateTask(ctx context.Context, name string) (*domain.Task, error) {
+func (t *Task) CreateTask(ctx context.Context, name string) (*task2.Task, error) {
 	if name == "" {
 		panic("Name must not be empty")
 	}
@@ -64,7 +63,7 @@ func (t *Task) DeleteTask(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *Task) UpdateTask(ctx context.Context, id, name string) (*domain.Task, error) {
+func (t *Task) UpdateTask(ctx context.Context, id, name string) (*task2.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}

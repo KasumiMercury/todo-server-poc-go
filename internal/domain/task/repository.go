@@ -1,17 +1,15 @@
-package repository
+package task
 
 import (
 	"context"
-
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain"
 )
 
 type TaskRepository interface {
-	FindById(ctx context.Context, id string) (*domain.Task, error)
-	FindAll(ctx context.Context) ([]*domain.Task, error)
-	Create(ctx context.Context, name string) (*domain.Task, error)
+	FindById(ctx context.Context, id string) (*Task, error)
+	FindAll(ctx context.Context) ([]*Task, error)
+	Create(ctx context.Context, name string) (*Task, error)
 	Delete(ctx context.Context, id string) error
-	Update(ctx context.Context, id, name string) (*domain.Task, error)
+	Update(ctx context.Context, id, name string) (*Task, error)
 }
 
 //type TaskMemory struct{}

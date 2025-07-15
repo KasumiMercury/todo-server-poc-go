@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -20,26 +21,26 @@ import (
 // MockTaskRepository implements repository.TaskRepository for testing
 type MockTaskRepository struct{}
 
-func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*domain.Task, error) {
+func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*task.Task, error) {
 	// Return mock tasks
-	task1 := domain.NewTask("1", "Test Task 1")
-	task2 := domain.NewTask("2", "Test Task 2")
-	return []*domain.Task{task1, task2}, nil
+	task1 := task.NewTask("1", "Test Task 1")
+	task2 := task.NewTask("2", "Test Task 2")
+	return []*task.Task{task1, task2}, nil
 }
 
-func (m *MockTaskRepository) FindById(ctx context.Context, id string) (*domain.Task, error) {
+func (m *MockTaskRepository) FindById(ctx context.Context, id string) (*task.Task, error) {
 	if id == "1" {
-		return domain.NewTask("1", "Test Task 1"), nil
+		return task.NewTask("1", "Test Task 1"), nil
 	}
 	return nil, nil
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, title string) (*domain.Task, error) {
-	return domain.NewTask("new-id", title), nil
+func (m *MockTaskRepository) Create(ctx context.Context, title string) (*task.Task, error) {
+	return task.NewTask("new-id", title), nil
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, id, title string) (*domain.Task, error) {
-	return domain.NewTask(id, title), nil
+func (m *MockTaskRepository) Update(ctx context.Context, id, title string) (*task.Task, error) {
+	return task.NewTask(id, title), nil
 }
 
 func (m *MockTaskRepository) Delete(ctx context.Context, id string) error {
@@ -63,7 +64,7 @@ func setupTestRouter() *gin.Engine {
 	router := gin.New()
 
 	// Add CORS middleware globally
-	router.Use(handler.CORSMiddleware())
+	//router.Use(handler.CORSMiddleware())
 
 	cfg := &config.Config{
 		JWTSecret: "secret-key-for-testing",
@@ -74,9 +75,9 @@ func setupTestRouter() *gin.Engine {
 	taskServer := handler.NewTaskServer(*taskController)
 
 	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
-	handler.RegisterHandlersWithOptions(router, taskServer, handler.GinServerOptions{
-		Middlewares: []handler.MiddlewareFunc{
-			handler.MiddlewareFunc(jwtMiddleware),
+	generated.RegisterHandlersWithOptions(router, taskServer, generated.GinServerOptions{
+		Middlewares: []generated.MiddlewareFunc{
+			generated.MiddlewareFunc(jwtMiddleware),
 		},
 	})
 
