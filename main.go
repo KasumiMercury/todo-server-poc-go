@@ -24,7 +24,7 @@ func main() {
 	router := gin.Default()
 
 	// Add CORS middleware globally
-	router.Use(handler.CORSMiddleware())
+	router.Use(handler.CORSMiddleware(*cfg))
 
 	taskRepo := repository.NewTaskDB(db)
 	taskController := controller.NewTask(taskRepo)

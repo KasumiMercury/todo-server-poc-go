@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 )
 
 type DatabaseConfig struct {
@@ -13,8 +14,9 @@ type DatabaseConfig struct {
 }
 
 type Config struct {
-	Database  DatabaseConfig
-	JWTSecret string
+	Database     DatabaseConfig
+	JWTSecret    string
+	AllowOrigins []string
 }
 
 func Load() *Config {
@@ -26,7 +28,8 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			Name:     getEnv("DB_NAME", "taskdb"),
 		},
-		JWTSecret: getEnv("JWT_SECRET", "secret-key-for-testing"),
+		JWTSecret:    getEnv("JWT_SECRET", "secret-key-for-testing"),
+		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
 	}
 }
 
