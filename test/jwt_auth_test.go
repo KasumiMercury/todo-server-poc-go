@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	task2 "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"net/http"
 	"net/http/httptest"
@@ -21,26 +21,26 @@ import (
 // MockTaskRepository implements repository.TaskRepository for testing
 type MockTaskRepository struct{}
 
-func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*task2.Task, error) {
+func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*task.Task, error) {
 	// Return mock tasks
-	task1 := task2.NewTask("1", "Test Task 1")
-	task2 := task2.NewTask("2", "Test Task 2")
-	return []*task2.Task{task1, task2}, nil
+	task1 := task.NewTask("1", "Test Task 1")
+	task2 := task.NewTask("2", "Test Task 2")
+	return []*task.Task{task1, task2}, nil
 }
 
-func (m *MockTaskRepository) FindById(ctx context.Context, id string) (*task2.Task, error) {
+func (m *MockTaskRepository) FindById(ctx context.Context, id string) (*task.Task, error) {
 	if id == "1" {
-		return task2.NewTask("1", "Test Task 1"), nil
+		return task.NewTask("1", "Test Task 1"), nil
 	}
 	return nil, nil
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, title string) (*task2.Task, error) {
-	return task2.NewTask("new-id", title), nil
+func (m *MockTaskRepository) Create(ctx context.Context, title string) (*task.Task, error) {
+	return task.NewTask("new-id", title), nil
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, id, title string) (*task2.Task, error) {
-	return task2.NewTask(id, title), nil
+func (m *MockTaskRepository) Update(ctx context.Context, id, title string) (*task.Task, error) {
+	return task.NewTask(id, title), nil
 }
 
 func (m *MockTaskRepository) Delete(ctx context.Context, id string) error {
@@ -64,7 +64,7 @@ func setupTestRouter() *gin.Engine {
 	router := gin.New()
 
 	// Add CORS middleware globally
-	router.Use(handler.CORSMiddleware())
+	//router.Use(handler.CORSMiddleware())
 
 	cfg := &config.Config{
 		JWTSecret: "secret-key-for-testing",
