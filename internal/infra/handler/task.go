@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/task"
+	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,10 +24,10 @@ func (t *TaskServer) TaskGetAllTasks(c *gin.Context) {
 		return
 	}
 
-	var res []task.Task
+	var res []taskHandler.Task
 
 	for _, task := range tasks {
-		res = append(res, task.Task{
+		res = append(res, taskHandler.Task{
 			Id:   task.ID(),
 			Name: task.Name(),
 		})
@@ -37,7 +37,7 @@ func (t *TaskServer) TaskGetAllTasks(c *gin.Context) {
 }
 
 func (t *TaskServer) TaskCreateTask(c *gin.Context) {
-	var req task.TaskCreate
+	var req taskHandler.TaskCreate
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		details := err.Error()
@@ -58,7 +58,7 @@ func (t *TaskServer) TaskCreateTask(c *gin.Context) {
 		return
 	}
 
-	res := task.Task{
+	res := taskHandler.Task{
 		Id:   task.ID(),
 		Name: task.Name(),
 	}
@@ -102,7 +102,7 @@ func (t *TaskServer) TaskGetTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	res := task.Task{
+	res := taskHandler.Task{
 		Id:   task.ID(),
 		Name: task.Name(),
 	}
@@ -117,7 +117,7 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	var req task.TaskUpdate
+	var req taskHandler.TaskUpdate
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		details := err.Error()
@@ -149,7 +149,7 @@ func (t *TaskServer) TaskUpdateTask(c *gin.Context, taskId string) {
 		return
 	}
 
-	res := task.Task{
+	res := taskHandler.Task{
 		Id:   task.ID(),
 		Name: task.Name(),
 	}

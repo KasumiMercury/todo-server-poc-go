@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"time"
 
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -20,11 +20,11 @@ func (TaskModel) TableName() string {
 	return "tasks"
 }
 
-func (t *TaskModel) ToDomain() *domain.Task {
-	return domain.NewTask(t.ID, t.Name)
+func (t *TaskModel) ToDomain() *task.Task {
+	return task.NewTask(t.ID, t.Name)
 }
 
-func NewTaskModelFromDomain(task *domain.Task) *TaskModel {
+func NewTaskModelFromDomain(task *task.Task) *TaskModel {
 	return &TaskModel{
 		ID:   task.ID(),
 		Name: task.Name(),
@@ -39,7 +39,7 @@ func NewTaskDB(db *gorm.DB) *TaskDB {
 	return &TaskDB{db: db}
 }
 
-func (t *TaskDB) FindById(ctx context.Context, id string) (*domain.Task, error) {
+func (t *TaskDB) FindById(ctx context.Context, id string) (*task.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -55,13 +55,13 @@ func (t *TaskDB) FindById(ctx context.Context, id string) (*domain.Task, error) 
 	return taskModel.ToDomain(), nil
 }
 
-func (t *TaskDB) FindAll(ctx context.Context) ([]*domain.Task, error) {
+func (t *TaskDB) FindAll(ctx context.Context) ([]*task.Task, error) {
 	var taskModels []TaskModel
 	if err := t.db.WithContext(ctx).Find(&taskModels).Error; err != nil {
 		return nil, err
 	}
 
-	tasks := make([]*domain.Task, len(taskModels))
+	tasks := make([]*task.Task, len(taskModels))
 	for i, taskModel := range taskModels {
 		tasks[i] = taskModel.ToDomain()
 	}
@@ -69,7 +69,7 @@ func (t *TaskDB) FindAll(ctx context.Context) ([]*domain.Task, error) {
 	return tasks, nil
 }
 
-func (t *TaskDB) Create(ctx context.Context, name string) (*domain.Task, error) {
+func (t *TaskDB) Create(ctx context.Context, name string) (*task.Task, error) {
 	if name == "" {
 		panic("Name must not be empty")
 	}
@@ -99,7 +99,7 @@ func (t *TaskDB) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *TaskDB) Update(ctx context.Context, id, name string) (*domain.Task, error) {
+func (t *TaskDB) Update(ctx context.Context, id, name string) (*task.Task, error) {
 	if id == "" {
 		panic("ID must not be empty")
 	}
