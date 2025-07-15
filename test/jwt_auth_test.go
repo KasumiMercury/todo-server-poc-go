@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,6 +21,25 @@ import (
 
 // MockTaskRepository implements repository.TaskRepository for testing
 type MockTaskRepository struct{}
+
+// MockHealthService implements service.HealthService for testing
+type MockHealthService struct{}
+
+func (m *MockHealthService) CheckHealth(ctx context.Context) service.HealthStatus {
+	return service.HealthStatus{
+		Status:    "UP",
+		Timestamp: time.Now(),
+		Components: map[string]service.HealthComponent{
+			"database": {
+				Status: "UP",
+				Details: map[string]interface{}{
+					"connection": "PostgreSQL",
+					"responseTime": "5ms",
+				},
+			},
+		},
+	}
+}
 
 func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*task.Task, error) {
 	// Return mock tasks
@@ -72,7 +92,8 @@ func setupTestRouter() *gin.Engine {
 
 	mockRepo := &MockTaskRepository{}
 	taskController := controller.NewTask(mockRepo)
-	taskServer := handler.NewTaskServer(*taskController)
+	mockHealthService := &MockHealthService{}
+	taskServer := handler.NewTaskServer(*taskController, mockHealthService)
 
 	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
 	generated.RegisterHandlersWithOptions(router, taskServer, generated.GinServerOptions{

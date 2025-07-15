@@ -9,6 +9,7 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/repository"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,17 +31,33 @@ func main() {
 	taskRepo := repository.NewTaskDB(db)
 	taskController := controller.NewTask(taskRepo)
 
+	// Initialize health service
+	healthService := service.NewHealthService(db)
+
 	taskServer := handler.NewTaskServer(
 		*taskController,
+		healthService,
 	)
 
-	// Register handlers with JWT middleware
+	// Register health endpoint without authentication
+	router.GET("/health", taskServer.HealthGetHealth)
+
+	// Register task endpoints with JWT middleware
 	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
-	generated.RegisterHandlersWithOptions(router, taskServer, generated.GinServerOptions{
-		Middlewares: []generated.MiddlewareFunc{
+	
+	// Register individual task endpoints with JWT middleware
+	taskWrapper := generated.ServerInterfaceWrapper{
+		Handler: taskServer,
+		HandlerMiddlewares: []generated.MiddlewareFunc{
 			generated.MiddlewareFunc(jwtMiddleware),
 		},
-	})
+	}
+	
+	router.GET("/tasks", taskWrapper.TaskGetAllTasks)
+	router.POST("/tasks", taskWrapper.TaskCreateTask)
+	router.GET("/tasks/:taskId", taskWrapper.TaskGetTask)
+	router.PUT("/tasks/:taskId", taskWrapper.TaskUpdateTask)
+	router.DELETE("/tasks/:taskId", taskWrapper.TaskDeleteTask)
 
 	if err := router.Run(":8080"); err != nil {
 		panic("Failed to start server: " + err.Error())

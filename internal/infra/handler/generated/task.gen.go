@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,18 @@ import (
 
 const (
 	BearerAuthScopes = "bearerAuth.Scopes"
+)
+
+// Defines values for HealthComponentStatus.
+const (
+	HealthComponentStatusDOWN HealthComponentStatus = "DOWN"
+	HealthComponentStatusUP   HealthComponentStatus = "UP"
+)
+
+// Defines values for HealthStatusStatus.
+const (
+	HealthStatusStatusDOWN HealthStatusStatus = "DOWN"
+	HealthStatusStatusUP   HealthStatusStatus = "UP"
 )
 
 // Error defines model for error.
@@ -33,6 +46,35 @@ type Error struct {
 	// Message Error message
 	Message string `json:"message"`
 }
+
+// HealthComponent defines model for healthComponent.
+type HealthComponent struct {
+	// Details Additional component details
+	Details *map[string]interface{} `json:"details,omitempty"`
+
+	// Status Component health status
+	Status HealthComponentStatus `json:"status"`
+}
+
+// HealthComponentStatus Component health status
+type HealthComponentStatus string
+
+// HealthStatus defines model for healthStatus.
+type HealthStatus struct {
+	// Components Health status of individual components
+	Components struct {
+		Database *HealthComponent `json:"database,omitempty"`
+	} `json:"components"`
+
+	// Status Overall application health status
+	Status HealthStatusStatus `json:"status"`
+
+	// Timestamp Timestamp of the health check
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// HealthStatusStatus Overall application health status
+type HealthStatusStatus string
 
 // Task defines model for task.
 type Task struct {
@@ -63,6 +105,9 @@ type TaskUpdateTaskJSONRequestBody = TaskUpdate
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get application health status
+	// (GET /health)
+	HealthGetHealth(c *gin.Context)
 	// Get all tasks
 	// (GET /tasks)
 	TaskGetAllTasks(c *gin.Context)
@@ -88,6 +133,19 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// HealthGetHealth operation middleware
+func (siw *ServerInterfaceWrapper) HealthGetHealth(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.HealthGetHealth(c)
+}
 
 // TaskGetAllTasks operation middleware
 func (siw *ServerInterfaceWrapper) TaskGetAllTasks(c *gin.Context) {
@@ -224,6 +282,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.GET(options.BaseURL+"/health", wrapper.HealthGetHealth)
 	router.GET(options.BaseURL+"/tasks", wrapper.TaskGetAllTasks)
 	router.POST(options.BaseURL+"/tasks", wrapper.TaskCreateTask)
 	router.DELETE(options.BaseURL+"/tasks/:taskId", wrapper.TaskDeleteTask)
@@ -234,21 +293,27 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xY30/jRhD+V1bbPhriQCKd/MZBS6lQj5agk4rysNiTZA971+yPtCny/17N7jpxYicH",
+	"KHCtjqc49mb2m2++/WacR5rKopQChNE0eaQ6nUHB3CUoJRVelEqWoAwHdzuVGeBnBjpVvDRcCprQn3Ax",
+	"cc8iCn+zosyBJoM4jqhZlEATyoWBKShaRTQDw3iu21FOsozjJcuJ253UKxsx6YWYs5xnhIvSGlIyxQow",
+	"oHBR2EobxcUUdypAazbdird+3Az/kWXkD3iwoE07YhVRBQ+WK8hocktDvnWY8XK9vPsCqUEEM2C5mZ3W",
+	"JLf5fAoZyxp1EYIlEQLS8LMrqc1UwfXvlxTB6lIKDSNeIKxhoRFTC6Q2zNgOCEvYxKdBwsKIgrAFMnBz",
+	"RSN69unzb5j8ikR3ezd3IdR2zq6XoDYF2BTsOuBfmjCJnBAuMj7nmW2SiPg3asAMu2PakfmjgglN6A+9",
+	"1fpeOBW9zWJWzyHz0xwUy3PCyjLnKcO7+6A1ooYXoA0ryvaeo/oRcmFmUG+YziC9X5P9UXw0OIj7B/3h",
+	"qB8nx3ESx3/SiE6kKpihCVIEB7jTUwvbxBU1i9ZVccP0fbvSPOvIaAbECv5ggfAMhOETDopMpHLpuTjN",
+	"tPpHx4NhF2mCFdAdHZ/UdLXiXbsLMvL3dxPBMxr22ZbyqQJmoJ34G4DbieumzPaJy4fLtgPbAIGHCFKr",
+	"uFlc48nzm98BU6BOrJmtvv1cy/PXzyMa+e6FkfzT1V4zY0paYWAuJrIjBabvyTWoOShycnXhxGsc9vaT",
+	"OSjtf9U/jA9j5EyWIFjJaUKPD+PDY/QXZmYOdfAMvJyCs38k1J3+i2zpWOdg/EXDs93Pj+I4OLwJ3aNh",
+	"H70vGnE8rveCNXdsGFuj0Ty3YdSWhgZUbXxf859uG6lCZdjT/DUYvyvXRktsWCfXwcwWGH/4fJ5wjBni",
+	"gLIkpm4fzh2JBjXnKboNmzOes7u82etxDjGgsDsHdbiR4um5+vGqI8llXO3jQh13GB+/ghbCmEdPl5og",
+	"CiZWQ7ZWedeMqtadb1h9K5b1bxgGTW7HEdW2KJha0ISeg9nZcQ2bavTDcEzHGKuHDqa3Hlm0hHMwJ3k+",
+	"cutedGRXlHADhf4aN85TV07JlGKLLo4uuTbOhx2yKqKDuP8sNC+S7I1g1syk4v941QyfScE+z8m6Ftbb",
+	"xu24aosjzwNbKzE4tsdVREuptwjAt+7Q0ZR/X/gos8Xe8m7MB9V68zbKQtUSXX+vO3cR7lph6iBlRNs0",
+	"Ba0nNs8XXmdvUHJ8Nwtcv2v7K9r22iGMCPirHsk29L20ut4jflxkle8NOfjhr636M/csqL7x6o1g2kPh",
+	"xVlzJCRGkhAbxzCauCGpHpET6iHQTaU3u8fm5DhunYLBltnOb9wl228goYGH+bqburSFNGQirfhfKdeL",
+	"jLAtqo12duWXa1OBURzmr6nO+NU9+sSns3qdexf4f3Ts2Kru0m5Rt3+NfrnArX+r36u8X2fuCf8/PGnu",
+	"id9m7rHhP4zvdu55P9M7z7SX7NZj7WNh8K7zeilTlpMM5pDLsgBhAhAaUavy8P9V0uvluG4mtUk+xB9i",
+	"Wo2rfwMAAP//2duNE8AZAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
