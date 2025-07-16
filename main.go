@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
-	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"log"
@@ -28,16 +27,10 @@ func main() {
 	// Initialize Echo router
 	router := echo.New()
 
-	// Setup Prometheus metrics
-	router.Use(echoprometheus.NewMiddleware(cfg.ServiceName))
-	go func() {
-		// Start metrics server on a separated port
-		metrics := echo.New()
-		metrics.GET("/metrics", echoprometheus.NewHandler())
-		if err := metrics.Start(":8081"); err != nil {
-			log.Fatal("Failed to start metrics server:", err)
-		}
-	}()
+	// Initialize metrics service
+	metricsService := service.NewMetricsService(*cfg)
+	metricsService.SetupMiddleware(router)
+	metricsService.StartMetricsServer()
 
 	// Setup OpenTelemetry middleware
 	router.Use(otelecho.Middleware(cfg.ServiceName))
