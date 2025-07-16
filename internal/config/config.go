@@ -17,6 +17,7 @@ type Config struct {
 	Database     DatabaseConfig
 	JWTSecret    string
 	AllowOrigins []string
+	ServiceName  string
 }
 
 func Load() *Config {
@@ -30,6 +31,7 @@ func Load() *Config {
 		},
 		JWTSecret:    getEnv("JWT_SECRET", "secret-key-for-testing"),
 		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
+		ServiceName:  getEnv("SERVICE_NAME", "todo-server"),
 	}
 }
 
