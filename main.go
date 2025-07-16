@@ -40,28 +40,27 @@ func main() {
 		healthService,
 	)
 
+	// Setup JWT middleware for protected endpoints
+	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+
+	// Create wrapper for generated handlers
+	wrapper := generated.ServerInterfaceWrapper{
+		Handler: taskServer,
+	}
+
 	// Register health endpoint without authentication
-	//router.GET("/health", taskServer.HealthGetHealth)
+	router.GET("/health", wrapper.HealthGetHealth)
 
-	// TODO: setup JWT middleware
+	// Create a group for protected task endpoints
+	taskGroup := router.Group("/tasks")
+	taskGroup.Use(jwtMiddleware)
+
 	// Register task endpoints with JWT middleware
-	//jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
-
-	// Register individual task endpoints with JWT middleware
-	//taskWrapper := generated.ServerInterfaceWrapper{
-	//	Handler: taskServer,
-	//	HandlerMiddlewares: []generated.MiddlewareFunc{
-	//		generated.MiddlewareFunc(jwtMiddleware),
-	//	},
-	//}
-
-	//router.GET("/tasks", taskWrapper.TaskGetAllTasks)
-	//router.POST("/tasks", taskWrapper.TaskCreateTask)
-	//router.GET("/tasks/:taskId", taskWrapper.TaskGetTask)
-	//router.PUT("/tasks/:taskId", taskWrapper.TaskUpdateTask)
-	//router.DELETE("/tasks/:taskId", taskWrapper.TaskDeleteTask)
-
-	generated.RegisterHandlers(router, taskServer)
+	taskGroup.GET("", wrapper.TaskGetAllTasks)
+	taskGroup.POST("", wrapper.TaskCreateTask)
+	taskGroup.GET("/:taskId", wrapper.TaskGetTask)
+	taskGroup.PUT("/:taskId", wrapper.TaskUpdateTask)
+	taskGroup.DELETE("/:taskId", wrapper.TaskDeleteTask)
 
 	if err := router.Start(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err.Error())
