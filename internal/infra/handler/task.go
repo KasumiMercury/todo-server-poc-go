@@ -25,8 +25,7 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 	tasks, err := t.controller.GetAllTasks(c.Request().Context())
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	var res []taskHandler.Task
@@ -38,8 +37,7 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 		})
 	}
 
-	c.JSON(200, res)
-	return nil
+	return c.JSON(200, res)
 }
 
 func (t *TaskServer) TaskCreateTask(c echo.Context) error {
@@ -47,21 +45,18 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return err
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	if req.Name == "" {
 		details := "name field is required and cannot be empty"
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return nil
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.CreateTask(c.Request().Context(), req.Name)
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
@@ -69,45 +64,38 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 		Name: task.Name(),
 	}
 
-	c.JSON(201, res)
-	return nil
+	return c.JSON(201, res)
 }
 
 func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 	if taskId == "" {
 		details := "taskId path parameter is required"
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return nil
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	err := t.controller.DeleteTask(c.Request().Context(), taskId)
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
-	c.JSON(204, nil)
-	return nil
+	return c.JSON(204, nil)
 }
 
 func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 	if taskId == "" {
 		details := "taskId path parameter is required"
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return nil
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), taskId)
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	if task == nil {
-		c.JSON(404, NewNotFoundError("Task not found"))
-		return nil
+		return c.JSON(404, NewNotFoundError("Task not found"))
 	}
 
 	res := taskHandler.Task{
@@ -115,35 +103,30 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 		Name: task.Name(),
 	}
 
-	c.JSON(200, res)
-	return nil
+	return c.JSON(200, res)
 }
 
 func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	if taskId == "" {
 		details := "taskId path parameter is required"
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return nil
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	var req taskHandler.TaskUpdate
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
-		c.JSON(400, NewBadRequestError("Bad request", &details))
-		return err
+		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), taskId)
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	if task == nil {
-		c.JSON(404, NewNotFoundError("Task not found"))
-		return nil
+		return c.JSON(404, NewNotFoundError("Task not found"))
 	}
 
 	name := task.Name()
@@ -154,8 +137,7 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	task, err = t.controller.UpdateTask(c.Request().Context(), taskId, name)
 	if err != nil {
 		details := err.Error()
-		c.JSON(500, NewInternalServerError("Internal server error", &details))
-		return err
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
@@ -163,21 +145,12 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		Name: task.Name(),
 	}
 
-	c.JSON(200, res)
-	return nil
+	return c.JSON(200, res)
 }
 
 // HealthGetHealth implements the ServerInterface for health endpoint
 func (t *TaskServer) HealthGetHealth(c echo.Context) error {
 	ctx := c.Request().Context()
-
-	// Handle potential panics from health service
-	defer func() {
-		if r := recover(); r != nil {
-			details := "Health check service unavailable"
-			c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal Server Error", &details))
-		}
-	}()
 
 	healthStatus := t.healthService.CheckHealth(ctx)
 
@@ -203,7 +176,5 @@ func (t *TaskServer) HealthGetHealth(c echo.Context) error {
 		statusCode = http.StatusServiceUnavailable
 	}
 
-	c.JSON(statusCode, components)
-
-	return nil
+	return c.JSON(statusCode, components)
 }
