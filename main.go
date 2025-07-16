@@ -54,7 +54,7 @@ func main() {
 	)
 
 	// Setup JWT middleware for protected endpoints
-	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+	jwtMiddleware := handler.JWTMiddleware(cfg)
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{

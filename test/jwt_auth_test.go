@@ -96,7 +96,7 @@ func setupTestRouter() *echo.Echo {
 	taskServer := handler.NewTaskServer(*taskController, mockHealthService)
 
 	// Setup JWT middleware for protected endpoints
-	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+	jwtMiddleware := handler.JWTMiddleware(cfg)
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
