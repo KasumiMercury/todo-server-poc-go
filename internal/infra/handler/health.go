@@ -34,7 +34,7 @@ type HealthComponentResponse struct {
 }
 
 // GetHealth handles GET /health requests
-func (h *HealthHandler) GetHealth(c echo.Context) {
+func (h *HealthHandler) GetHealth(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	healthStatus := h.healthService.CheckHealth(ctx)
@@ -59,5 +59,5 @@ func (h *HealthHandler) GetHealth(c echo.Context) {
 		statusCode = http.StatusServiceUnavailable
 	}
 
-	c.JSON(statusCode, response)
+	return c.JSON(statusCode, response)
 }

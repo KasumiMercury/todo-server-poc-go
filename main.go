@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"log"
 
@@ -26,6 +27,9 @@ func main() {
 
 	// Initialize Echo router
 	router := echo.New()
+
+	// Add panic recovery middleware
+	router.Use(middleware.Recover())
 
 	// Initialize metrics service
 	metricsService := service.NewMetricsService(*cfg)
