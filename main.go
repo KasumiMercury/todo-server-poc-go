@@ -5,6 +5,7 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho"
 	"log"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
@@ -28,7 +29,7 @@ func main() {
 	router := echo.New()
 
 	// Setup Prometheus metrics
-	router.Use(echoprometheus.NewMiddleware("todo_server"))
+	router.Use(echoprometheus.NewMiddleware(cfg.ServiceName))
 	go func() {
 		// Start metrics server on a separated port
 		metrics := echo.New()
@@ -37,6 +38,9 @@ func main() {
 			log.Fatal("Failed to start metrics server:", err)
 		}
 	}()
+
+	// Setup OpenTelemetry middleware
+	router.Use(otelecho.Middleware(cfg.ServiceName))
 
 	// Add CORS middleware globally
 	router.Use(handler.CORSMiddleware(*cfg))
