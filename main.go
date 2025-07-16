@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"log"
 
@@ -23,8 +24,19 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	//router := gin.Default()
+	// Initialize Echo router
 	router := echo.New()
+
+	// Setup Prometheus metrics
+	router.Use(echoprometheus.NewMiddleware("todo_server"))
+	go func() {
+		// Start metrics server on a separated port
+		metrics := echo.New()
+		metrics.GET("/metrics", echoprometheus.NewHandler())
+		if err := metrics.Start(":8081"); err != nil {
+			log.Fatal("Failed to start metrics server:", err)
+		}
+	}()
 
 	// Add CORS middleware globally
 	router.Use(handler.CORSMiddleware(*cfg))
