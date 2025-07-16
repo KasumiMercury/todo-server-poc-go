@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/gin-gonic/gin"
+	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
 )
 
@@ -107,187 +107,149 @@ type TaskUpdateTaskJSONRequestBody = TaskUpdate
 type ServerInterface interface {
 	// Get application health status
 	// (GET /health)
-	HealthGetHealth(c *gin.Context)
+	HealthGetHealth(ctx echo.Context) error
 	// Get all tasks
 	// (GET /tasks)
-	TaskGetAllTasks(c *gin.Context)
+	TaskGetAllTasks(ctx echo.Context) error
 	// Create a new task
 	// (POST /tasks)
-	TaskCreateTask(c *gin.Context)
+	TaskCreateTask(ctx echo.Context) error
 	// Delete a task
 	// (DELETE /tasks/{taskId})
-	TaskDeleteTask(c *gin.Context, taskId string)
+	TaskDeleteTask(ctx echo.Context, taskId string) error
 	// Get a task
 	// (GET /tasks/{taskId})
-	TaskGetTask(c *gin.Context, taskId string)
+	TaskGetTask(ctx echo.Context, taskId string) error
 	// Update a task
 	// (PUT /tasks/{taskId})
-	TaskUpdateTask(c *gin.Context, taskId string)
+	TaskUpdateTask(ctx echo.Context, taskId string) error
 }
 
-// ServerInterfaceWrapper converts contexts to parameters.
+// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandler       func(*gin.Context, error, int)
+	Handler ServerInterface
 }
 
-type MiddlewareFunc func(c *gin.Context)
-
-// HealthGetHealth operation middleware
-func (siw *ServerInterfaceWrapper) HealthGetHealth(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.HealthGetHealth(c)
-}
-
-// TaskGetAllTasks operation middleware
-func (siw *ServerInterfaceWrapper) TaskGetAllTasks(c *gin.Context) {
-
-	c.Set(BearerAuthScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.TaskGetAllTasks(c)
-}
-
-// TaskCreateTask operation middleware
-func (siw *ServerInterfaceWrapper) TaskCreateTask(c *gin.Context) {
-
-	c.Set(BearerAuthScopes, []string{})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.TaskCreateTask(c)
-}
-
-// TaskDeleteTask operation middleware
-func (siw *ServerInterfaceWrapper) TaskDeleteTask(c *gin.Context) {
-
+// HealthGetHealth converts echo context to params.
+func (w *ServerInterfaceWrapper) HealthGetHealth(ctx echo.Context) error {
 	var err error
 
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.HealthGetHealth(ctx)
+	return err
+}
+
+// TaskGetAllTasks converts echo context to params.
+func (w *ServerInterfaceWrapper) TaskGetAllTasks(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TaskGetAllTasks(ctx)
+	return err
+}
+
+// TaskCreateTask converts echo context to params.
+func (w *ServerInterfaceWrapper) TaskCreateTask(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(BearerAuthScopes, []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TaskCreateTask(ctx)
+	return err
+}
+
+// TaskDeleteTask converts echo context to params.
+func (w *ServerInterfaceWrapper) TaskDeleteTask(ctx echo.Context) error {
+	var err error
 	// ------------- Path parameter "taskId" -------------
 	var taskId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "taskId", c.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", ctx.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter taskId: %w", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter taskId: %s", err))
 	}
 
-	c.Set(BearerAuthScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.TaskDeleteTask(c, taskId)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TaskDeleteTask(ctx, taskId)
+	return err
 }
 
-// TaskGetTask operation middleware
-func (siw *ServerInterfaceWrapper) TaskGetTask(c *gin.Context) {
-
+// TaskGetTask converts echo context to params.
+func (w *ServerInterfaceWrapper) TaskGetTask(ctx echo.Context) error {
 	var err error
-
 	// ------------- Path parameter "taskId" -------------
 	var taskId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "taskId", c.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", ctx.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter taskId: %w", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter taskId: %s", err))
 	}
 
-	c.Set(BearerAuthScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.TaskGetTask(c, taskId)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TaskGetTask(ctx, taskId)
+	return err
 }
 
-// TaskUpdateTask operation middleware
-func (siw *ServerInterfaceWrapper) TaskUpdateTask(c *gin.Context) {
-
+// TaskUpdateTask converts echo context to params.
+func (w *ServerInterfaceWrapper) TaskUpdateTask(ctx echo.Context) error {
 	var err error
-
 	// ------------- Path parameter "taskId" -------------
 	var taskId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "taskId", c.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", ctx.Param("taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter taskId: %w", err), http.StatusBadRequest)
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter taskId: %s", err))
 	}
 
-	c.Set(BearerAuthScopes, []string{})
+	ctx.Set(BearerAuthScopes, []string{})
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.TaskUpdateTask(c, taskId)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TaskUpdateTask(ctx, taskId)
+	return err
 }
 
-// GinServerOptions provides options for the Gin server.
-type GinServerOptions struct {
-	BaseURL      string
-	Middlewares  []MiddlewareFunc
-	ErrorHandler func(*gin.Context, error, int)
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router gin.IRouter, si ServerInterface) {
-	RegisterHandlersWithOptions(router, si, GinServerOptions{})
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
 }
 
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
-	errorHandler := options.ErrorHandler
-	if errorHandler == nil {
-		errorHandler = func(c *gin.Context, err error, statusCode int) {
-			c.JSON(statusCode, gin.H{"msg": err.Error()})
-		}
-	}
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandler:       errorHandler,
+		Handler: si,
 	}
 
-	router.GET(options.BaseURL+"/health", wrapper.HealthGetHealth)
-	router.GET(options.BaseURL+"/tasks", wrapper.TaskGetAllTasks)
-	router.POST(options.BaseURL+"/tasks", wrapper.TaskCreateTask)
-	router.DELETE(options.BaseURL+"/tasks/:taskId", wrapper.TaskDeleteTask)
-	router.GET(options.BaseURL+"/tasks/:taskId", wrapper.TaskGetTask)
-	router.PUT(options.BaseURL+"/tasks/:taskId", wrapper.TaskUpdateTask)
+	router.GET(baseURL+"/health", wrapper.HealthGetHealth)
+	router.GET(baseURL+"/tasks", wrapper.TaskGetAllTasks)
+	router.POST(baseURL+"/tasks", wrapper.TaskCreateTask)
+	router.DELETE(baseURL+"/tasks/:taskId", wrapper.TaskDeleteTask)
+	router.GET(baseURL+"/tasks/:taskId", wrapper.TaskGetTask)
+	router.PUT(baseURL+"/tasks/:taskId", wrapper.TaskUpdateTask)
+
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
