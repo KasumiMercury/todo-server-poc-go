@@ -32,8 +32,8 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 
 	for _, task := range tasks {
 		res = append(res, taskHandler.Task{
-			Id:   task.ID(),
-			Name: task.Name(),
+			Id:    task.ID(),
+			Title: task.Title(),
 		})
 	}
 
@@ -48,20 +48,20 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	if req.Name == "" {
-		details := "name field is required and cannot be empty"
+	if req.Title == "" {
+		details := "title field is required and cannot be empty"
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.CreateTask(c.Request().Context(), req.Name)
+	task, err := t.controller.CreateTask(c.Request().Context(), req.Title)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
-		Id:   task.ID(),
-		Name: task.Name(),
+		Id:    task.ID(),
+		Title: task.Title(),
 	}
 
 	return c.JSON(201, res)
@@ -99,8 +99,8 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 	}
 
 	res := taskHandler.Task{
-		Id:   task.ID(),
-		Name: task.Name(),
+		Id:    task.ID(),
+		Title: task.Title(),
 	}
 
 	return c.JSON(200, res)
@@ -129,20 +129,20 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(404, NewNotFoundError("Task not found"))
 	}
 
-	name := task.Name()
-	if req.Name != nil {
-		name = *req.Name
+	title := task.Title()
+	if req.Title != nil {
+		title = *req.Title
 	}
 
-	task, err = t.controller.UpdateTask(c.Request().Context(), taskId, name)
+	task, err = t.controller.UpdateTask(c.Request().Context(), taskId, title)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
-		Id:   task.ID(),
-		Name: task.Name(),
+		Id:    task.ID(),
+		Title: task.Title(),
 	}
 
 	return c.JSON(200, res)

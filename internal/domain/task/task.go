@@ -1,14 +1,14 @@
 package task
 
 type Task struct {
-	id   string
-	name string
+	id    string
+	title string
 }
 
-func NewTask(id, name string) *Task {
+func NewTask(id, title string) *Task {
 	return &Task{
-		id:   id,
-		name: name,
+		id:    id,
+		title: title,
 	}
 }
 
@@ -16,6 +16,6 @@ func (t *Task) ID() string {
 	return t.id
 }
 
-func (t *Task) Name() string {
-	return t.name
+func (t *Task) Title() string {
+	return t.title
 }
