@@ -161,7 +161,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	})
 
 	t.Run("POST /tasks with valid JWT token should return 201", func(t *testing.T) {
-		requestBody := map[string]string{"name": "New Test Task"}
+		requestBody := map[string]string{"title": "New Test Task"}
 		jsonData, _ := json.Marshal(requestBody)
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
@@ -186,7 +186,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	})
 
 	t.Run("PUT /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
-		updateBody := map[string]string{"name": "Updated Test Task"}
+		updateBody := map[string]string{"title": "Updated Test Task"}
 		jsonData, _ := json.Marshal(updateBody)
 		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
