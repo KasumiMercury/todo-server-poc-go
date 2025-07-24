@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -13,9 +14,16 @@ type DatabaseConfig struct {
 	Name     string
 }
 
+type JWKsConfig struct {
+	EndpointURL    string
+	CacheDuration  int // seconds
+	RefreshPadding int // seconds
+}
+
 type Config struct {
 	Database     DatabaseConfig
 	JWTSecret    string
+	JWKs         JWKsConfig
 	AllowOrigins []string
 	ServiceName  string
 }
@@ -29,7 +37,12 @@ func Load() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			Name:     getEnv("DB_NAME", "taskdb"),
 		},
-		JWTSecret:    getEnv("JWT_SECRET", "secret-key-for-testing"),
+		JWTSecret: getEnv("JWT_SECRET", "secret-key-for-testing"),
+		JWKs: JWKsConfig{
+			EndpointURL:    getEnv("JWKS_ENDPOINT_URL", ""),
+			CacheDuration:  getIntEnv("JWKS_CACHE_DURATION", 3600), // 1 hour
+			RefreshPadding: getIntEnv("JWKS_REFRESH_PADDING", 300), // 5 minutes
+		},
 		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
 		ServiceName:  getEnv("SERVICE_NAME", "todo-server"),
 	}
@@ -38,6 +51,15 @@ func Load() *Config {
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return defaultValue
+}
+
+func getIntEnv(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
 	}
 	return defaultValue
 }
