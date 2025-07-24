@@ -42,35 +42,52 @@ func (m *MockHealthService) CheckHealth(ctx context.Context) service.HealthStatu
 	}
 }
 
-func (m *MockTaskRepository) FindAll(ctx context.Context) ([]*task.Task, error) {
-	// Return mock tasks
-	task1 := task.NewTask("1", "Test Task 1")
-	task2 := task.NewTask("2", "Test Task 2")
-	return []*task.Task{task1, task2}, nil
+func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
+	// Return mock tasks for the specific user
+	if userID == "test-user" {
+		task1 := task.NewTask("1", "Test Task 1", userID)
+		task2 := task.NewTask("2", "Test Task 2", userID)
+		return []*task.Task{task1, task2}, nil
+	}
+	if userID == "other-user" {
+		task3 := task.NewTask("3", "Other User Task", userID)
+		return []*task.Task{task3}, nil
+	}
+	return []*task.Task{}, nil
 }
 
-func (m *MockTaskRepository) FindById(ctx context.Context, id string) (*task.Task, error) {
-	if id == "1" {
-		return task.NewTask("1", "Test Task 1"), nil
+func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
+	if userID == "test-user" && id == "1" {
+		return task.NewTask("1", "Test Task 1", userID), nil
+	}
+	if userID == "other-user" && id == "3" {
+		return task.NewTask("3", "Other User Task", userID), nil
 	}
 	return nil, nil
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, title string) (*task.Task, error) {
-	return task.NewTask("new-id", title), nil
+func (m *MockTaskRepository) Create(ctx context.Context, userID, title string) (*task.Task, error) {
+	return task.NewTask("new-id", title, userID), nil
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, id, title string) (*task.Task, error) {
-	return task.NewTask(id, title), nil
+func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
+	if userID == "test-user" && id == "1" {
+		return task.NewTask(id, title, userID), nil
+	}
+	return nil, nil
 }
 
-func (m *MockTaskRepository) Delete(ctx context.Context, id string) error {
+func (m *MockTaskRepository) Delete(ctx context.Context, userID, id string) error {
 	return nil
 }
 
 func generateTestJWT() string {
+	return generateTestJWTForUser("test-user")
+}
+
+func generateTestJWTForUser(userID string) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": "test-user",
+		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 		"iat": time.Now().Unix(),
 	})
@@ -207,6 +224,92 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 
 		if w.Code != http.StatusNoContent {
 			t.Errorf("Expected status %d, got %d", http.StatusNoContent, w.Code)
+		}
+	})
+}
+
+func TestUserTaskSeparation(t *testing.T) {
+	router := setupTestRouter()
+	testUserJWT := generateTestJWTForUser("test-user")
+	otherUserJWT := generateTestJWTForUser("other-user")
+
+	t.Run("Users should only see their own tasks", func(t *testing.T) {
+		// Test user should see 2 tasks
+		req, _ := http.NewRequest("GET", "/tasks", nil)
+		req.Header.Set("Authorization", "Bearer "+testUserJWT)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+		}
+
+		var testUserTasks []map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &testUserTasks)
+		if len(testUserTasks) != 2 {
+			t.Errorf("Expected test-user to have 2 tasks, got %d", len(testUserTasks))
+		}
+
+		// Other user should see 1 task
+		req, _ = http.NewRequest("GET", "/tasks", nil)
+		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
+		w = httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status %d, got %d", http.StatusOK, w.Code)
+		}
+
+		var otherUserTasks []map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &otherUserTasks)
+		if len(otherUserTasks) != 1 {
+			t.Errorf("Expected other-user to have 1 task, got %d", len(otherUserTasks))
+		}
+	})
+
+	t.Run("Users should not access other users' tasks by ID", func(t *testing.T) {
+		// Test user tries to access other user's task (task ID 3)
+		req, _ := http.NewRequest("GET", "/tasks/3", nil)
+		req.Header.Set("Authorization", "Bearer "+testUserJWT)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("Expected status %d when test-user tries to access other user's task, got %d", http.StatusNotFound, w.Code)
+		}
+
+		// Other user tries to access test user's task (task ID 1)
+		req, _ = http.NewRequest("GET", "/tasks/1", nil)
+		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
+		w = httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("Expected status %d when other-user tries to access test user's task, got %d", http.StatusNotFound, w.Code)
+		}
+	})
+
+	t.Run("Created tasks should belong to the authenticated user", func(t *testing.T) {
+		requestBody := map[string]string{"title": "Test User New Task"}
+		jsonData, _ := json.Marshal(requestBody)
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testUserJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusCreated {
+			t.Errorf("Expected status %d, got %d", http.StatusCreated, w.Code)
+		}
+
+		// Verify response doesn't contain userID (as per OpenAPI schema)
+		var response map[string]interface{}
+		json.Unmarshal(w.Body.Bytes(), &response)
+		if _, exists := response["userId"]; exists {
+			t.Error("Response should not contain userId field")
+		}
+		if response["title"] != "Test User New Task" {
+			t.Errorf("Expected title 'Test User New Task', got %s", response["title"])
 		}
 	})
 }

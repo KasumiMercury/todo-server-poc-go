@@ -15,12 +15,15 @@ func NewTask(taskRepo task.TaskRepository) *Task {
 	}
 }
 
-func (t *Task) GetTaskById(ctx context.Context, id string) (*task.Task, error) {
+func (t *Task) GetTaskById(ctx context.Context, userID, id string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
-	taskItem, err := t.taskRepo.FindById(ctx, id)
+	taskItem, err := t.taskRepo.FindById(ctx, userID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +31,12 @@ func (t *Task) GetTaskById(ctx context.Context, id string) (*task.Task, error) {
 	return taskItem, nil
 }
 
-func (t *Task) GetAllTasks(ctx context.Context) ([]*task.Task, error) {
-	tasks, err := t.taskRepo.FindAll(ctx)
+func (t *Task) GetAllTasks(ctx context.Context, userID string) ([]*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
+
+	tasks, err := t.taskRepo.FindAllByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -37,12 +44,15 @@ func (t *Task) GetAllTasks(ctx context.Context) ([]*task.Task, error) {
 	return tasks, nil
 }
 
-func (t *Task) CreateTask(ctx context.Context, title string) (*task.Task, error) {
+func (t *Task) CreateTask(ctx context.Context, userID, title string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if title == "" {
 		panic("Title must not be empty")
 	}
 
-	taskItem, err := t.taskRepo.Create(ctx, title)
+	taskItem, err := t.taskRepo.Create(ctx, userID, title)
 	if err != nil {
 		return nil, err
 	}
@@ -50,12 +60,15 @@ func (t *Task) CreateTask(ctx context.Context, title string) (*task.Task, error)
 	return taskItem, nil
 }
 
-func (t *Task) DeleteTask(ctx context.Context, id string) error {
+func (t *Task) DeleteTask(ctx context.Context, userID, id string) error {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
-	err := t.taskRepo.Delete(ctx, id)
+	err := t.taskRepo.Delete(ctx, userID, id)
 	if err != nil {
 		return err
 	}
@@ -63,7 +76,10 @@ func (t *Task) DeleteTask(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *Task) UpdateTask(ctx context.Context, id, title string) (*task.Task, error) {
+func (t *Task) UpdateTask(ctx context.Context, userID, id, title string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -71,7 +87,7 @@ func (t *Task) UpdateTask(ctx context.Context, id, title string) (*task.Task, er
 		panic("Title must not be empty")
 	}
 
-	taskItem, err := t.taskRepo.Update(ctx, id, title)
+	taskItem, err := t.taskRepo.Update(ctx, userID, id, title)
 	if err != nil {
 		return nil, err
 	}

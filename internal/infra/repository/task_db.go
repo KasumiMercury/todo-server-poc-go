@@ -12,6 +12,7 @@ import (
 type TaskModel struct {
 	ID        string    `gorm:"primaryKey;type:varchar(36)"`
 	Title     string    `gorm:"not null;type:varchar(255)"`
+	UserID    string    `gorm:"not null;type:varchar(255);index"` // Note: This stores userId from JWT sub claim, which may change in the future
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
@@ -21,13 +22,14 @@ func (TaskModel) TableName() string {
 }
 
 func (t *TaskModel) ToDomain() *task.Task {
-	return task.NewTask(t.ID, t.Title)
+	return task.NewTask(t.ID, t.Title, t.UserID)
 }
 
 func NewTaskModelFromDomain(task *task.Task) *TaskModel {
 	return &TaskModel{
-		ID:    task.ID(),
-		Title: task.Title(),
+		ID:     task.ID(),
+		Title:  task.Title(),
+		UserID: task.UserID(),
 	}
 }
 
@@ -39,13 +41,16 @@ func NewTaskDB(db *gorm.DB) *TaskDB {
 	return &TaskDB{db: db}
 }
 
-func (t *TaskDB) FindById(ctx context.Context, id string) (*task.Task, error) {
+func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
 	var taskModel TaskModel
-	if err := t.db.WithContext(ctx).First(&taskModel, "id = ?", id).Error; err != nil {
+	if err := t.db.WithContext(ctx).First(&taskModel, "id = ? AND user_id = ?", id, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
@@ -55,9 +60,13 @@ func (t *TaskDB) FindById(ctx context.Context, id string) (*task.Task, error) {
 	return taskModel.ToDomain(), nil
 }
 
-func (t *TaskDB) FindAll(ctx context.Context) ([]*task.Task, error) {
+func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
+
 	var taskModels []TaskModel
-	if err := t.db.WithContext(ctx).Find(&taskModels).Error; err != nil {
+	if err := t.db.WithContext(ctx).Find(&taskModels, "user_id = ?", userID).Error; err != nil {
 		return nil, err
 	}
 
@@ -69,14 +78,18 @@ func (t *TaskDB) FindAll(ctx context.Context) ([]*task.Task, error) {
 	return tasks, nil
 }
 
-func (t *TaskDB) Create(ctx context.Context, title string) (*task.Task, error) {
+func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if title == "" {
 		panic("Title must not be empty")
 	}
 
 	taskModel := &TaskModel{
-		ID:    uuid.New().String(),
-		Title: title,
+		ID:     uuid.New().String(),
+		Title:  title,
+		UserID: userID,
 	}
 
 	if err := t.db.WithContext(ctx).Create(taskModel).Error; err != nil {
@@ -86,12 +99,15 @@ func (t *TaskDB) Create(ctx context.Context, title string) (*task.Task, error) {
 	return taskModel.ToDomain(), nil
 }
 
-func (t *TaskDB) Delete(ctx context.Context, id string) error {
+func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
-	result := t.db.WithContext(ctx).Delete(&TaskModel{}, "id = ?", id)
+	result := t.db.WithContext(ctx).Delete(&TaskModel{}, "id = ? AND user_id = ?", id, userID)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -99,7 +115,10 @@ func (t *TaskDB) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (t *TaskDB) Update(ctx context.Context, id, title string) (*task.Task, error) {
+func (t *TaskDB) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
+	if userID == "" {
+		panic("UserID must not be empty")
+	}
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -108,7 +127,7 @@ func (t *TaskDB) Update(ctx context.Context, id, title string) (*task.Task, erro
 	}
 
 	var taskModel TaskModel
-	if err := t.db.WithContext(ctx).First(&taskModel, "id = ?", id).Error; err != nil {
+	if err := t.db.WithContext(ctx).First(&taskModel, "id = ? AND user_id = ?", id, userID).Error; err != nil {
 		return nil, err
 	}
 
