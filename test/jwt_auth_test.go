@@ -349,3 +349,110 @@ func TestCORSOptionsEndpoint(t *testing.T) {
 		}
 	})
 }
+
+func TestTaskTitleValidation(t *testing.T) {
+	router := setupTestRouter()
+	testJWT := generateTestJWT()
+
+	t.Run("POST /tasks with empty title should return 400", func(t *testing.T) {
+		requestBody := map[string]string{"title": ""}
+		jsonData, _ := json.Marshal(requestBody)
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status %d for empty title, got %d", http.StatusBadRequest, w.Code)
+		}
+	})
+
+	t.Run("POST /tasks with whitespace-only title should return 400", func(t *testing.T) {
+		requestBody := map[string]string{"title": "   "}
+		jsonData, _ := json.Marshal(requestBody)
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status %d for whitespace-only title, got %d", http.StatusBadRequest, w.Code)
+		}
+	})
+
+	t.Run("POST /tasks with exactly 255 character title should return 201", func(t *testing.T) {
+		longTitle := strings.Repeat("a", 255)
+		requestBody := map[string]string{"title": longTitle}
+		jsonData, _ := json.Marshal(requestBody)
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusCreated {
+			t.Errorf("Expected status %d for 255-char title, got %d", http.StatusCreated, w.Code)
+		}
+	})
+
+	t.Run("POST /tasks with 256 character title should return 400", func(t *testing.T) {
+		longTitle := strings.Repeat("a", 256)
+		requestBody := map[string]string{"title": longTitle}
+		jsonData, _ := json.Marshal(requestBody)
+		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status %d for 256-char title, got %d", http.StatusBadRequest, w.Code)
+		}
+	})
+
+	t.Run("PUT /tasks/1 with empty title should return 400", func(t *testing.T) {
+		updateBody := map[string]string{"title": ""}
+		jsonData, _ := json.Marshal(updateBody)
+		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status %d for empty title in update, got %d", http.StatusBadRequest, w.Code)
+		}
+	})
+
+	t.Run("PUT /tasks/1 with 256 character title should return 400", func(t *testing.T) {
+		longTitle := strings.Repeat("b", 256)
+		updateBody := map[string]string{"title": longTitle}
+		jsonData, _ := json.Marshal(updateBody)
+		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("Expected status %d for 256-char title in update, got %d", http.StatusBadRequest, w.Code)
+		}
+	})
+
+	t.Run("PUT /tasks/1 with exactly 255 character title should return 200", func(t *testing.T) {
+		longTitle := strings.Repeat("c", 255)
+		updateBody := map[string]string{"title": longTitle}
+		jsonData, _ := json.Marshal(updateBody)
+		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req.Header.Set("Authorization", "Bearer "+testJWT)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status %d for 255-char title in update, got %d", http.StatusOK, w.Code)
+		}
+	})
+}
