@@ -53,8 +53,18 @@ func main() {
 		healthService,
 	)
 
-	// Setup JWT middleware for protected endpoints
-	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+	// Setup JWT service and middleware for protected endpoints
+	jwtService, err := handler.NewJWTService(*cfg)
+	if err != nil {
+		log.Fatal("Failed to initialize JWT service:", err)
+	}
+
+	var jwtMiddleware echo.MiddlewareFunc
+	if cfg.JWKs.EndpointURL != "" {
+		jwtMiddleware = handler.JWTMiddlewareWithService(jwtService)
+	} else {
+		jwtMiddleware = handler.JWTMiddleware(cfg.JWTSecret)
+	}
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
