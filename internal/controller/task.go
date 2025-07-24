@@ -48,8 +48,11 @@ func (t *Task) CreateTask(ctx context.Context, userID, title string) (*task.Task
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
-	if title == "" {
-		panic("Title must not be empty")
+
+	// Validate title using domain validation
+	_, err := task.NewTaskWithValidation("", title, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	taskItem, err := t.taskRepo.Create(ctx, userID, title)
@@ -83,8 +86,11 @@ func (t *Task) UpdateTask(ctx context.Context, userID, id, title string) (*task.
 	if id == "" {
 		panic("ID must not be empty")
 	}
-	if title == "" {
-		panic("Title must not be empty")
+
+	// Validate title using domain validation
+	_, err := task.NewTaskWithValidation("", title, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	taskItem, err := t.taskRepo.Update(ctx, userID, id, title)

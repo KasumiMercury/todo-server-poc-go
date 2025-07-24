@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"github.com/labstack/echo/v4"
 	"net/http"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
@@ -19,6 +21,11 @@ func NewTaskServer(ctr controller.Task, healthService service.HealthService) *Ta
 		controller:    ctr,
 		healthService: healthService,
 	}
+}
+
+// isDomainValidationError checks if the error is a domain validation error
+func isDomainValidationError(err error) bool {
+	return errors.Is(err, task.ErrTitleEmpty) || errors.Is(err, task.ErrTitleTooLong)
 }
 
 func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
@@ -70,6 +77,9 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 	task, err := t.controller.CreateTask(c.Request().Context(), userID, req.Title)
 	if err != nil {
 		details := err.Error()
+		if isDomainValidationError(err) {
+			return c.JSON(400, NewBadRequestError("Bad request", &details))
+		}
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -172,6 +182,9 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	task, err = t.controller.UpdateTask(c.Request().Context(), userID, taskId, title)
 	if err != nil {
 		details := err.Error()
+		if isDomainValidationError(err) {
+			return c.JSON(400, NewBadRequestError("Bad request", &details))
+		}
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
