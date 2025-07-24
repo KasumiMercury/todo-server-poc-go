@@ -22,7 +22,14 @@ func NewTaskServer(ctr controller.Task, healthService service.HealthService) *Ta
 }
 
 func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
-	tasks, err := t.controller.GetAllTasks(c.Request().Context())
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		details := "User ID not found in token"
+		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	}
+
+	tasks, err := t.controller.GetAllTasks(c.Request().Context(), userID)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -41,6 +48,13 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 }
 
 func (t *TaskServer) TaskCreateTask(c echo.Context) error {
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		details := "User ID not found in token"
+		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	}
+
 	var req taskHandler.TaskCreate
 
 	if err := c.Bind(&req); err != nil {
@@ -53,7 +67,7 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.CreateTask(c.Request().Context(), req.Title)
+	task, err := t.controller.CreateTask(c.Request().Context(), userID, req.Title)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -68,12 +82,19 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 }
 
 func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		details := "User ID not found in token"
+		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	}
+
 	if taskId == "" {
 		details := "taskId path parameter is required"
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	err := t.controller.DeleteTask(c.Request().Context(), taskId)
+	err := t.controller.DeleteTask(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -83,12 +104,19 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 }
 
 func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		details := "User ID not found in token"
+		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	}
+
 	if taskId == "" {
 		details := "taskId path parameter is required"
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.GetTaskById(c.Request().Context(), taskId)
+	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -107,6 +135,13 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 }
 
 func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		details := "User ID not found in token"
+		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	}
+
 	if taskId == "" {
 		details := "taskId path parameter is required"
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
@@ -119,7 +154,7 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.GetTaskById(c.Request().Context(), taskId)
+	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -134,7 +169,7 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		title = *req.Title
 	}
 
-	task, err = t.controller.UpdateTask(c.Request().Context(), taskId, title)
+	task, err = t.controller.UpdateTask(c.Request().Context(), userID, taskId, title)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
