@@ -9,8 +9,7 @@ require (
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo-jwt/v4 v4.3.1
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/lestrrat-go/jwx/v3 v3.0.8
-	github.com/lestrrat-go/jwx/v3 v3.0.8
+	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/oapi-codegen/runtime v1.1.2
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.62.0
 	golang.org/x/net v0.42.0
