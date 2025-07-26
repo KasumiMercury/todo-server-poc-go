@@ -13,6 +13,7 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	infraAuth "github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
@@ -92,7 +93,7 @@ func generateTestJWTForUser(userID string) string {
 		"iat": time.Now().Unix(),
 	})
 
-	tokenString, _ := token.SignedString([]byte("secret-key-for-testing"))
+	tokenString, _ := token.SignedString([]byte("test-secret-key-for-testing"))
 	return tokenString
 }
 
@@ -100,7 +101,9 @@ func setupTestRouter() *echo.Echo {
 	router := echo.New()
 
 	cfg := &config.Config{
-		JWTSecret:    "secret-key-for-testing",
+		Auth: config.AuthConfig{
+			JWTSecret: "test-secret-key-for-testing",
+		},
 		AllowOrigins: []string{"http://localhost:5173", "http://localhost:3000"},
 	}
 
@@ -112,8 +115,13 @@ func setupTestRouter() *echo.Echo {
 	mockHealthService := &MockHealthService{}
 	taskServer := handler.NewTaskServer(*taskController, mockHealthService)
 
-	// Setup JWT middleware for protected endpoints
-	jwtMiddleware := handler.JWTMiddleware(cfg.JWTSecret)
+	// Setup authentication service and middleware
+	authService, err := infraAuth.NewAuthenticationService(*cfg)
+	if err != nil {
+		panic(err)
+	}
+	authMiddleware := handler.NewAuthenticationMiddleware(authService)
+	authMiddlewareFunc := authMiddleware.MiddlewareFunc()
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
@@ -125,9 +133,9 @@ func setupTestRouter() *echo.Echo {
 
 	// Create a group for protected task endpoints
 	taskGroup := router.Group("/tasks")
-	taskGroup.Use(jwtMiddleware)
+	taskGroup.Use(authMiddlewareFunc)
 
-	// Register task endpoints with JWT middleware
+	// Register task endpoints with authentication middleware
 	taskGroup.GET("", wrapper.TaskGetAllTasks)
 	taskGroup.POST("", wrapper.TaskCreateTask)
 	taskGroup.GET("/:taskId", wrapper.TaskGetTask)
