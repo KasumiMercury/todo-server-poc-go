@@ -16,7 +16,7 @@ import (
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/auth"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
+	infraAuth "github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/keyloader"
 )
 
@@ -32,16 +32,13 @@ func TestPrivateKeyFileLoader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Generate test RSA key
 			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 			require.NoError(t, err)
 
-			// Create temporary file
 			tempFile, err := ioutil.TempFile("", "test_key_*.pem")
 			require.NoError(t, err)
 			defer os.Remove(tempFile.Name())
 
-			// Write key in specified format
 			var keyBytes []byte
 			var blockType string
 
@@ -112,17 +109,14 @@ func TestPrivateKeyFileLoader_Errors(t *testing.T) {
 	})
 }
 
-func TestJWTServiceWithPrivateKey(t *testing.T) {
-	// Generate test RSA key
+func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
-	// Create temporary key file
-	tempFile, err := ioutil.TempFile("", "test_jwt_key_*.pem")
+	tempFile, err := os.CreateTemp("", "test_jwt_key_*.pem")
 	require.NoError(t, err)
 	defer os.Remove(tempFile.Name())
 
-	// Write RSA PEM key
 	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	pemBlock := &pem.Block{
 		Type:  "RSA PRIVATE KEY",
@@ -132,17 +126,17 @@ func TestJWTServiceWithPrivateKey(t *testing.T) {
 	require.NoError(t, err)
 	tempFile.Close()
 
-	// Create JWT service with private key file
 	cfg := config.Config{
-		PrivateKeyFilePath: tempFile.Name(),
-		JWTSecret:          "fallback-secret",
+		Auth: config.AuthConfig{
+			PrivateKeyFilePath: tempFile.Name(),
+			JWTSecret:          "fallback-secret",
+		},
 	}
 
-	jwtService, err := handler.NewJWTService(cfg)
+	authService, err := infraAuth.NewAuthenticationService(cfg)
 	require.NoError(t, err)
 
 	t.Run("valid token with private key", func(t *testing.T) {
-		// Create a valid JWT token signed with the private key
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 			"sub": "test-user-123",
 			"exp": time.Now().Add(time.Hour).Unix(),
@@ -152,21 +146,20 @@ func TestJWTServiceWithPrivateKey(t *testing.T) {
 		tokenString, err := token.SignedString(privateKey)
 		require.NoError(t, err)
 
-		// Validate using JWT service
-		result := jwtService.ValidateToken(tokenString)
+		result := authService.ValidateToken(tokenString)
 		assert.True(t, result.IsValid())
 		assert.Equal(t, "test-user-123", result.UserID())
 		assert.NotNil(t, result.Claims())
+		assert.Equal(t, "PrivateKey", result.StrategyName())
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
-		result := jwtService.ValidateToken("invalid.token.here")
+		result := authService.ValidateToken("invalid.token.here")
 		assert.False(t, result.IsValid())
 		assert.NotNil(t, result.Error())
 	})
 
 	t.Run("expired token", func(t *testing.T) {
-		// Create an expired token
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 			"sub": "test-user-123",
 			"exp": time.Now().Add(-time.Hour).Unix(), // Expired 1 hour ago
@@ -176,19 +169,17 @@ func TestJWTServiceWithPrivateKey(t *testing.T) {
 		tokenString, err := token.SignedString(privateKey)
 		require.NoError(t, err)
 
-		result := jwtService.ValidateToken(tokenString)
+		result := authService.ValidateToken(tokenString)
 		assert.False(t, result.IsValid())
 		assert.NotNil(t, result.Error())
 	})
 }
 
 func TestAuthenticationPriority(t *testing.T) {
-	// Generate test RSA key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
-	// Create temporary key file
-	tempFile, err := ioutil.TempFile("", "test_priority_key_*.pem")
+	tempFile, err := os.CreateTemp("", "test_priority_key_*.pem")
 	require.NoError(t, err)
 	defer os.Remove(tempFile.Name())
 
@@ -203,14 +194,15 @@ func TestAuthenticationPriority(t *testing.T) {
 
 	t.Run("private key has priority over string secret", func(t *testing.T) {
 		cfg := config.Config{
-			PrivateKeyFilePath: tempFile.Name(),
-			JWTSecret:          "string-secret",
+			Auth: config.AuthConfig{
+				PrivateKeyFilePath: tempFile.Name(),
+				JWTSecret:          "string-secret",
+			},
 		}
 
-		jwtService, err := handler.NewJWTService(cfg)
+		authService, err := infraAuth.NewAuthenticationService(cfg)
 		require.NoError(t, err)
 
-		// Create token signed with private key
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 			"sub": "private-key-user",
 			"exp": time.Now().Add(time.Hour).Unix(),
@@ -218,9 +210,9 @@ func TestAuthenticationPriority(t *testing.T) {
 		privateKeyToken, err := token.SignedString(privateKey)
 		require.NoError(t, err)
 
-		// Should validate successfully with private key
-		result := jwtService.ValidateToken(privateKeyToken)
+		result := authService.ValidateToken(privateKeyToken)
 		assert.True(t, result.IsValid())
 		assert.Equal(t, "private-key-user", result.UserID())
+		assert.Equal(t, "PrivateKey", result.StrategyName())
 	})
 }

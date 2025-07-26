@@ -10,6 +10,7 @@ import (
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/repository"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
@@ -53,20 +54,15 @@ func main() {
 		healthService,
 	)
 
-	// Setup JWT service and middleware for protected endpoints
-	jwtService, err := handler.NewJWTService(*cfg)
+	// Setup authentication service with strategy pattern
+	authService, err := auth.NewAuthenticationService(*cfg)
 	if err != nil {
-		log.Fatal("Failed to initialize JWT service:", err)
+		log.Fatal("Failed to initialize authentication service:", err)
 	}
 
-	// Use unified JWT service that handles all authentication methods
-	// Priority: Private Key File > JWKs > String Secret
-	var jwtMiddleware echo.MiddlewareFunc
-	if cfg.JWKs.EndpointURL != "" || cfg.PrivateKeyFilePath != "" {
-		jwtMiddleware = handler.JWTMiddlewareWithService(jwtService)
-	} else {
-		jwtMiddleware = handler.JWTMiddleware(cfg.JWTSecret)
-	}
+	// Create authentication middleware
+	authMiddleware := handler.NewAuthenticationMiddleware(authService)
+	authMiddlewareFunc := authMiddleware.MiddlewareFunc()
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
@@ -78,9 +74,9 @@ func main() {
 
 	// Create a group for protected task endpoints
 	taskGroup := router.Group("/tasks")
-	taskGroup.Use(jwtMiddleware)
+	taskGroup.Use(authMiddlewareFunc)
 
-	// Register task endpoints with JWT middleware
+	// Register task endpoints with authentication middleware
 	taskGroup.GET("", wrapper.TaskGetAllTasks)
 	taskGroup.POST("", wrapper.TaskCreateTask)
 	taskGroup.GET("/:taskId", wrapper.TaskGetTask)
