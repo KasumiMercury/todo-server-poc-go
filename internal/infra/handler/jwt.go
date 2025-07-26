@@ -128,7 +128,7 @@ func (j *JWTService) ValidateToken(tokenString string) *auth.TokenValidationResu
 
 // JWTMiddleware returns an Echo JWT middleware for validating JWT tokens
 func JWTMiddleware(secretKey string) echo.MiddlewareFunc {
-	config := echojwt.Config{
+	jwtCfg := echojwt.Config{
 		SigningKey: []byte(secretKey),
 		ErrorHandler: func(c echo.Context, err error) error {
 			details := "Invalid token: " + err.Error()
@@ -144,21 +144,21 @@ func JWTMiddleware(secretKey string) echo.MiddlewareFunc {
 			}
 		},
 	}
-	return echojwt.WithConfig(config)
+	return echojwt.WithConfig(jwtCfg)
 }
 
 func JWTMiddlewareWithService(jwtService *JWTService) echo.MiddlewareFunc {
 	return echo.MiddlewareFunc(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			auth := c.Request().Header.Get("Authorization")
-			if auth == "" {
+			authHeader := c.Request().Header.Get("Authorization")
+			if authHeader == "" {
 				details := "Missing authorization header"
 				return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 			}
 
 			tokenString := ""
-			if len(auth) > 7 && auth[:7] == "Bearer " {
-				tokenString = auth[7:]
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenString = authHeader[7:]
 			} else {
 				details := "Invalid authorization header format"
 				return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
