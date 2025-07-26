@@ -21,11 +21,12 @@ type JWKsConfig struct {
 }
 
 type Config struct {
-	Database     DatabaseConfig
-	JWTSecret    string
-	JWKs         JWKsConfig
-	AllowOrigins []string
-	ServiceName  string
+	Database           DatabaseConfig
+	JWTSecret          string
+	JWKs               JWKsConfig
+	PrivateKeyFilePath string
+	AllowOrigins       []string
+	ServiceName        string
 }
 
 func Load() *Config {
@@ -43,8 +44,9 @@ func Load() *Config {
 			CacheDuration:  getIntEnv("JWKS_CACHE_DURATION", 3600), // 1 hour
 			RefreshPadding: getIntEnv("JWKS_REFRESH_PADDING", 300), // 5 minutes
 		},
-		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
-		ServiceName:  getEnv("SERVICE_NAME", "todo-server"),
+		PrivateKeyFilePath: getEnv("JWT_PRIVATE_KEY_FILE", ""),
+		AllowOrigins:       strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
+		ServiceName:        getEnv("SERVICE_NAME", "todo-server"),
 	}
 }
 

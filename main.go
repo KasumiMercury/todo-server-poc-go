@@ -59,8 +59,10 @@ func main() {
 		log.Fatal("Failed to initialize JWT service:", err)
 	}
 
+	// Use unified JWT service that handles all authentication methods
+	// Priority: Private Key File > JWKs > String Secret
 	var jwtMiddleware echo.MiddlewareFunc
-	if cfg.JWKs.EndpointURL != "" {
+	if cfg.JWKs.EndpointURL != "" || cfg.PrivateKeyFilePath != "" {
 		jwtMiddleware = handler.JWTMiddlewareWithService(jwtService)
 	} else {
 		jwtMiddleware = handler.JWTMiddleware(cfg.JWTSecret)
