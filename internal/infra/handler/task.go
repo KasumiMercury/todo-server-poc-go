@@ -104,7 +104,18 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
-	err := t.controller.DeleteTask(c.Request().Context(), userID, taskId)
+	// Check if task exists before deletion
+	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+	}
+
+	if task == nil {
+		return c.JSON(404, NewNotFoundError("Task not found"))
+	}
+
+	err = t.controller.DeleteTask(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
