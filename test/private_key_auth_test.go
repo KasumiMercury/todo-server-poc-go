@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -35,7 +34,7 @@ func TestPrivateKeyFileLoader(t *testing.T) {
 			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 			require.NoError(t, err)
 
-			tempFile, err := ioutil.TempFile("", "test_key_*.pem")
+			tempFile, err := os.CreateTemp("", "test_key_*.pem")
 			require.NoError(t, err)
 
 			defer os.Remove(tempFile.Name())
@@ -92,7 +91,7 @@ func TestPrivateKeyFileLoader_Errors(t *testing.T) {
 	})
 
 	t.Run("invalid file format", func(t *testing.T) {
-		tempFile, err := ioutil.TempFile("", "invalid_key_*")
+		tempFile, err := os.CreateTemp("", "invalid_key_*")
 		require.NoError(t, err)
 
 		defer os.Remove(tempFile.Name())
