@@ -37,7 +37,11 @@ func TestPrivateKeyFileLoader(t *testing.T) {
 			tempFile, err := os.CreateTemp("", "test_key_*.pem")
 			require.NoError(t, err)
 
-			defer os.Remove(tempFile.Name())
+			defer func() {
+				if err := os.Remove(tempFile.Name()); err != nil {
+					t.Logf("Failed to remove temp file %s: %v", tempFile.Name(), err)
+				}
+			}()
 
 			var (
 				keyBytes  []byte
@@ -62,7 +66,10 @@ func TestPrivateKeyFileLoader(t *testing.T) {
 
 			err = pem.Encode(tempFile, pemBlock)
 			require.NoError(t, err)
-			tempFile.Close()
+
+			if err := tempFile.Close(); err != nil {
+				t.Fatalf("Failed to close temp file: %v", err)
+			}
 
 			// Test loading
 			loader := keyloader.NewFileLoader()
@@ -94,11 +101,18 @@ func TestPrivateKeyFileLoader_Errors(t *testing.T) {
 		tempFile, err := os.CreateTemp("", "invalid_key_*")
 		require.NoError(t, err)
 
-		defer os.Remove(tempFile.Name())
+		defer func() {
+			if err := os.Remove(tempFile.Name()); err != nil {
+				t.Logf("Failed to remove temp file %s: %v", tempFile.Name(), err)
+			}
+		}()
 
 		_, err = tempFile.WriteString("invalid key content")
 		require.NoError(t, err)
-		tempFile.Close()
+
+		if err := tempFile.Close(); err != nil {
+			t.Fatalf("Failed to close temp file: %v", err)
+		}
 
 		privateKeyFile, err := auth.NewPrivateKeyFile(tempFile.Name())
 		require.NoError(t, err)
@@ -120,7 +134,11 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 	tempFile, err := os.CreateTemp("", "test_jwt_key_*.pem")
 	require.NoError(t, err)
 
-	defer os.Remove(tempFile.Name())
+	defer func() {
+		if err := os.Remove(tempFile.Name()); err != nil {
+			t.Logf("Failed to remove temp file %s: %v", tempFile.Name(), err)
+		}
+	}()
 
 	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	pemBlock := &pem.Block{
@@ -129,7 +147,10 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 	}
 	err = pem.Encode(tempFile, pemBlock)
 	require.NoError(t, err)
-	tempFile.Close()
+
+	if err := tempFile.Close(); err != nil {
+		t.Fatalf("Failed to close temp file: %v", err)
+	}
 
 	cfg := config.Config{
 		Auth: config.AuthConfig{
@@ -187,7 +208,11 @@ func TestAuthenticationPriority(t *testing.T) {
 	tempFile, err := os.CreateTemp("", "test_priority_key_*.pem")
 	require.NoError(t, err)
 
-	defer os.Remove(tempFile.Name())
+	defer func() {
+		if err := os.Remove(tempFile.Name()); err != nil {
+			t.Logf("Failed to remove temp file %s: %v", tempFile.Name(), err)
+		}
+	}()
 
 	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	pemBlock := &pem.Block{
@@ -196,7 +221,10 @@ func TestAuthenticationPriority(t *testing.T) {
 	}
 	err = pem.Encode(tempFile, pemBlock)
 	require.NoError(t, err)
-	tempFile.Close()
+
+	if err := tempFile.Close(); err != nil {
+		t.Fatalf("Failed to close temp file: %v", err)
+	}
 
 	t.Run("private key has priority over string secret", func(t *testing.T) {
 		cfg := config.Config{

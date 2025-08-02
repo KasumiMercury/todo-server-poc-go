@@ -99,7 +99,10 @@ func generateTestJWTForUser(userID string) string {
 		"iat": time.Now().Unix(),
 	})
 
-	tokenString, _ := token.SignedString([]byte("test-secret-key-for-testing"))
+	tokenString, err := token.SignedString([]byte("test-secret-key-for-testing"))
+	if err != nil {
+		panic("Failed to sign test JWT token: " + err.Error())
+	}
 
 	return tokenString
 }
@@ -157,7 +160,11 @@ func TestJWTAuthenticationUnauthorized(t *testing.T) {
 	router := setupTestRouter()
 
 	t.Run("GET /tasks without JWT token should return 401", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/tasks", nil)
+		req, err := http.NewRequest("GET", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -167,7 +174,11 @@ func TestJWTAuthenticationUnauthorized(t *testing.T) {
 	})
 
 	t.Run("GET /tasks with invalid JWT token should return 401", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/tasks", nil)
+		req, err := http.NewRequest("GET", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer invalid-token")
 
 		w := httptest.NewRecorder()
@@ -184,7 +195,11 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	testJWT := generateTestJWT()
 
 	t.Run("GET /tasks with valid JWT token should return 200", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/tasks", nil)
+		req, err := http.NewRequest("GET", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 
 		w := httptest.NewRecorder()
@@ -197,8 +212,17 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 
 	t.Run("POST /tasks with valid JWT token should return 201", func(t *testing.T) {
 		requestBody := map[string]string{"title": "New Test Task"}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -211,7 +235,11 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	})
 
 	t.Run("GET /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", "/tasks/1", nil)
+		req, err := http.NewRequest("GET", "/tasks/1", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 
 		w := httptest.NewRecorder()
@@ -224,8 +252,17 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 
 	t.Run("PUT /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
 		updateBody := map[string]string{"title": "Updated Test Task"}
-		jsonData, _ := json.Marshal(updateBody)
-		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(updateBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -238,7 +275,11 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	})
 
 	t.Run("DELETE /tasks/1 with valid JWT token should return 204", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", "/tasks/1", nil)
+		req, err := http.NewRequest("DELETE", "/tasks/1", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 
 		w := httptest.NewRecorder()
@@ -257,7 +298,11 @@ func TestUserTaskSeparation(t *testing.T) {
 
 	t.Run("Users should only see their own tasks", func(t *testing.T) {
 		// Test user should see 2 tasks
-		req, _ := http.NewRequest("GET", "/tasks", nil)
+		req, err := http.NewRequest("GET", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
 
 		w := httptest.NewRecorder()
@@ -268,14 +313,20 @@ func TestUserTaskSeparation(t *testing.T) {
 		}
 
 		var testUserTasks []map[string]interface{}
-		json.Unmarshal(w.Body.Bytes(), &testUserTasks)
+		if err := json.Unmarshal(w.Body.Bytes(), &testUserTasks); err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
 
 		if len(testUserTasks) != 2 {
 			t.Errorf("Expected test-user to have 2 tasks, got %d", len(testUserTasks))
 		}
 
 		// Other user should see 1 task
-		req, _ = http.NewRequest("GET", "/tasks", nil)
+		req, err = http.NewRequest("GET", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
 
 		w = httptest.NewRecorder()
@@ -286,7 +337,9 @@ func TestUserTaskSeparation(t *testing.T) {
 		}
 
 		var otherUserTasks []map[string]interface{}
-		json.Unmarshal(w.Body.Bytes(), &otherUserTasks)
+		if err := json.Unmarshal(w.Body.Bytes(), &otherUserTasks); err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
 
 		if len(otherUserTasks) != 1 {
 			t.Errorf("Expected other-user to have 1 task, got %d", len(otherUserTasks))
@@ -295,7 +348,11 @@ func TestUserTaskSeparation(t *testing.T) {
 
 	t.Run("Users should not access other users' tasks by ID", func(t *testing.T) {
 		// Test user tries to access other user's task (task ID 3)
-		req, _ := http.NewRequest("GET", "/tasks/3", nil)
+		req, err := http.NewRequest("GET", "/tasks/3", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
 
 		w := httptest.NewRecorder()
@@ -306,7 +363,11 @@ func TestUserTaskSeparation(t *testing.T) {
 		}
 
 		// Other user tries to access test user's task (task ID 1)
-		req, _ = http.NewRequest("GET", "/tasks/1", nil)
+		req, err = http.NewRequest("GET", "/tasks/1", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
 
 		w = httptest.NewRecorder()
@@ -319,8 +380,17 @@ func TestUserTaskSeparation(t *testing.T) {
 
 	t.Run("Created tasks should belong to the authenticated user", func(t *testing.T) {
 		requestBody := map[string]string{"title": "Test User New Task"}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -333,7 +403,9 @@ func TestUserTaskSeparation(t *testing.T) {
 
 		// Verify response doesn't contain userID (as per OpenAPI schema)
 		var response map[string]interface{}
-		json.Unmarshal(w.Body.Bytes(), &response)
+		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+			t.Fatalf("Failed to unmarshal response: %v", err)
+		}
 
 		if _, exists := response["userId"]; exists {
 			t.Error("Response should not contain userId field")
@@ -349,7 +421,11 @@ func TestCORSOptionsEndpoint(t *testing.T) {
 	router := setupTestRouter()
 
 	t.Run("OPTIONS /tasks should return CORS headers without authentication", func(t *testing.T) {
-		req, _ := http.NewRequest("OPTIONS", "/tasks", nil)
+		req, err := http.NewRequest("OPTIONS", "/tasks", nil)
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Origin", "http://localhost:5173")
 
 		w := httptest.NewRecorder()
@@ -389,8 +465,17 @@ func TestTaskTitleValidation(t *testing.T) {
 
 	t.Run("POST /tasks with empty title should return 400", func(t *testing.T) {
 		requestBody := map[string]string{"title": ""}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -404,8 +489,17 @@ func TestTaskTitleValidation(t *testing.T) {
 
 	t.Run("POST /tasks with whitespace-only title should return 400", func(t *testing.T) {
 		requestBody := map[string]string{"title": "   "}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -420,8 +514,17 @@ func TestTaskTitleValidation(t *testing.T) {
 	t.Run("POST /tasks with exactly 255 character title should return 201", func(t *testing.T) {
 		longTitle := strings.Repeat("a", 255)
 		requestBody := map[string]string{"title": longTitle}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -436,8 +539,17 @@ func TestTaskTitleValidation(t *testing.T) {
 	t.Run("POST /tasks with 256 character title should return 400", func(t *testing.T) {
 		longTitle := strings.Repeat("a", 256)
 		requestBody := map[string]string{"title": longTitle}
-		jsonData, _ := json.Marshal(requestBody)
-		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -451,8 +563,17 @@ func TestTaskTitleValidation(t *testing.T) {
 
 	t.Run("PUT /tasks/1 with empty title should return 400", func(t *testing.T) {
 		updateBody := map[string]string{"title": ""}
-		jsonData, _ := json.Marshal(updateBody)
-		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(updateBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -467,8 +588,17 @@ func TestTaskTitleValidation(t *testing.T) {
 	t.Run("PUT /tasks/1 with 256 character title should return 400", func(t *testing.T) {
 		longTitle := strings.Repeat("b", 256)
 		updateBody := map[string]string{"title": longTitle}
-		jsonData, _ := json.Marshal(updateBody)
-		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(updateBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
@@ -483,8 +613,17 @@ func TestTaskTitleValidation(t *testing.T) {
 	t.Run("PUT /tasks/1 with exactly 255 character title should return 200", func(t *testing.T) {
 		longTitle := strings.Repeat("c", 255)
 		updateBody := map[string]string{"title": longTitle}
-		jsonData, _ := json.Marshal(updateBody)
-		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+
+		jsonData, err := json.Marshal(updateBody)
+		if err != nil {
+			t.Fatalf("Failed to marshal JSON: %v", err)
+		}
+
+		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		if err != nil {
+			t.Fatalf("Failed to create request: %v", err)
+		}
+
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
 
