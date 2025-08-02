@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"golang.org/x/net/context"
 )
@@ -39,6 +40,10 @@ func (t *Task) GetAllTasks(ctx context.Context, userID string) ([]*task.Task, er
 
 	tasks, err := t.taskRepo.FindAllByUserID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, task.ErrTaskNotFound) {
+			return []*task.Task{}, nil
+		}
+
 		return nil, err
 	}
 

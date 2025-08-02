@@ -44,7 +44,7 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
-	var res []taskHandler.Task
+	res := make([]taskHandler.Task, 0, len(tasks))
 
 	for _, task := range tasks {
 		res = append(res, taskHandler.Task{
