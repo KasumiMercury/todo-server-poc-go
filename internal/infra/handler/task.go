@@ -33,12 +33,14 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
 		details := "User ID not found in token"
+
 		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	tasks, err := t.controller.GetAllTasks(c.Request().Context(), userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -59,6 +61,7 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
 		details := "User ID not found in token"
+
 		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
 	}
 
@@ -66,11 +69,13 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	if req.Title == "" {
 		details := "title field is required and cannot be empty"
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
@@ -97,11 +102,13 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
 		details := "User ID not found in token"
+
 		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
@@ -109,6 +116,7 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -119,6 +127,7 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 	err = t.controller.DeleteTask(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -130,17 +139,20 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
 		details := "User ID not found in token"
+
 		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -161,11 +173,13 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
 		details := "User ID not found in token"
+
 		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
@@ -173,12 +187,14 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
+
 		return c.JSON(400, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -219,7 +235,7 @@ func (t *TaskServer) HealthGetHealth(c echo.Context) error {
 	components := taskHandler.HealthStatus{
 		Status:    taskHandler.HealthStatusStatus(healthStatus.Status),
 		Timestamp: healthStatus.Timestamp,
-		Components: struct {
+		Components: struct { //nolint:exhaustruct
 			Database *taskHandler.HealthComponent `json:"database,omitempty"`
 		}{},
 	}
