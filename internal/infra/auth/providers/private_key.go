@@ -21,28 +21,34 @@ type PrivateKeyStrategy struct {
 }
 
 func NewPrivateKeyStrategy(cfg config.Config) (*PrivateKeyStrategy, error) {
-	strategy := &PrivateKeyStrategy{
-		name:       PrivateKeyStrategyName,
-		configured: cfg.Auth.PrivateKeyFilePath != "",
-	}
 
-	if strategy.configured {
-		strategy.privateKeyLoader = keyloader.NewFileLoader()
+	if cfg.Auth.PrivateKeyFilePath != "" {
+		privateKeyLoader := keyloader.NewFileLoader()
 
 		privateKeyFile, err := auth.NewPrivateKeyFile(cfg.Auth.PrivateKeyFilePath)
 		if err != nil {
 			return nil, err
 		}
 
-		loadedKey, err := strategy.privateKeyLoader.LoadPrivateKey(privateKeyFile)
+		loadedKey, err := privateKeyLoader.LoadPrivateKey(privateKeyFile)
 		if err != nil {
 			return nil, err
 		}
 
-		strategy.loadedPrivateKey = loadedKey
+		return &PrivateKeyStrategy{
+			name:             PrivateKeyStrategyName,
+			configured:       true,
+			privateKeyLoader: privateKeyLoader,
+			loadedPrivateKey: loadedKey,
+		}, nil
 	}
 
-	return strategy, nil
+	return &PrivateKeyStrategy{
+		name:             PrivateKeyStrategyName,
+		configured:       false,
+		privateKeyLoader: nil,
+		loadedPrivateKey: nil,
+	}, nil
 }
 
 func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
