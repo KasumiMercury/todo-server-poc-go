@@ -68,28 +68,3 @@ func TestNewJWKsCacheConfig(t *testing.T) {
 		t.Errorf("expected refresh padding %v but got %v", refreshPadding, config.RefreshPadding())
 	}
 }
-
-func TestTokenValidationResult(t *testing.T) {
-	claims := map[string]interface{}{
-		"sub": "user123",
-		"iat": 1234567890,
-	}
-
-	result := auth.NewTokenValidationResult(true, "user123", claims, nil)
-
-	if !result.IsValid() {
-		t.Errorf("expected valid token")
-	}
-
-	if result.UserID() != "user123" {
-		t.Errorf("expected user ID 'user123' but got '%s'", result.UserID())
-	}
-
-	if result.Claims()["sub"] != "user123" {
-		t.Errorf("expected sub claim 'user123' but got '%v'", result.Claims()["sub"])
-	}
-
-	if result.Error() != nil {
-		t.Errorf("expected no error but got %v", result.Error())
-	}
-}

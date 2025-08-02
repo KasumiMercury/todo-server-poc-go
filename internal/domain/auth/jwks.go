@@ -47,11 +47,10 @@ type TokenValidationResult struct {
 	err     error
 }
 
-func NewTokenValidationResult(isValid bool, userID string, claims map[string]interface{}, err error) *TokenValidationResult {
+func NewTokenValidationResult(isValid bool, userID string, err error) *TokenValidationResult {
 	return &TokenValidationResult{
 		isValid: isValid,
 		userID:  userID,
-		claims:  claims,
 		err:     err,
 	}
 }
@@ -62,10 +61,6 @@ func (r *TokenValidationResult) IsValid() bool {
 
 func (r *TokenValidationResult) UserID() string {
 	return r.userID
-}
-
-func (r *TokenValidationResult) Claims() map[string]interface{} {
-	return r.claims
 }
 
 func (r *TokenValidationResult) Error() error {

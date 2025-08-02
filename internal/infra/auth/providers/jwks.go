@@ -52,7 +52,7 @@ func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
 
 func (s *JWKsStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	if !s.configured || s.jwksClient == nil {
-		return auth.NewTokenValidationResult(false, "", nil, auth.ErrProviderNotConfigured)
+		return auth.NewTokenValidationResult(false, "", auth.ErrProviderNotConfigured)
 	}
 
 	return s.jwksClient.ValidateToken(tokenString)

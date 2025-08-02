@@ -31,10 +31,6 @@ func (a *AuthenticationResult) UserID() string {
 	return a.Result.UserID()
 }
 
-func (a *AuthenticationResult) Claims() map[string]interface{} {
-	return a.Result.Claims()
-}
-
 func (a *AuthenticationResult) Error() error {
 	return a.Result.Error()
 }

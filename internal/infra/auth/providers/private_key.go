@@ -52,7 +52,7 @@ func NewPrivateKeyStrategy(cfg config.Config) (*PrivateKeyStrategy, error) {
 
 func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	if !s.configured || s.loadedPrivateKey == nil {
-		return auth.NewTokenValidationResult(false, "", nil, auth.ErrProviderNotConfigured)
+		return auth.NewTokenValidationResult(false, "", auth.ErrProviderNotConfigured)
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -64,11 +64,11 @@ func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValida
 		return &s.loadedPrivateKey.Key().PublicKey, nil
 	})
 	if err != nil {
-		return auth.NewTokenValidationResult(false, "", nil, err)
+		return auth.NewTokenValidationResult(false, "", err)
 	}
 
 	if !token.Valid {
-		return auth.NewTokenValidationResult(false, "", nil, auth.ErrTokenValidation)
+		return auth.NewTokenValidationResult(false, "", auth.ErrTokenValidation)
 	}
 
 	claims := make(map[string]interface{})
@@ -84,7 +84,7 @@ func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValida
 		userID = sub
 	}
 
-	return auth.NewTokenValidationResult(true, userID, claims, nil)
+	return auth.NewTokenValidationResult(true, userID, nil)
 }
 
 func (s *PrivateKeyStrategy) Name() string {

@@ -40,7 +40,6 @@ func (m *AuthenticationMiddleware) MiddlewareFunc() echo.MiddlewareFunc {
 
 			// Store authentication information in context
 			c.Set("user_id", result.UserID())
-			c.Set("jwt_claims", result.Claims())
 			c.Set("auth_strategy", result.StrategyName())
 
 			return next(c)

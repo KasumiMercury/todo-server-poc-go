@@ -30,7 +30,7 @@ func NewSecretStrategy(cfg config.Config) (*SecretStrategy, error) {
 
 func (s *SecretStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	if !s.configured {
-		return auth.NewTokenValidationResult(false, "", nil, auth.ErrProviderNotConfigured)
+		return auth.NewTokenValidationResult(false, "", auth.ErrProviderNotConfigured)
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -42,11 +42,11 @@ func (s *SecretStrategy) ValidateToken(tokenString string) *auth.TokenValidation
 		return []byte(s.secretKey), nil
 	})
 	if err != nil {
-		return auth.NewTokenValidationResult(false, "", nil, err)
+		return auth.NewTokenValidationResult(false, "", err)
 	}
 
 	if !token.Valid {
-		return auth.NewTokenValidationResult(false, "", nil, auth.ErrTokenValidation)
+		return auth.NewTokenValidationResult(false, "", auth.ErrTokenValidation)
 	}
 
 	claims := make(map[string]interface{})
@@ -62,7 +62,7 @@ func (s *SecretStrategy) ValidateToken(tokenString string) *auth.TokenValidation
 		userID = sub
 	}
 
-	return auth.NewTokenValidationResult(true, userID, claims, nil)
+	return auth.NewTokenValidationResult(true, userID, nil)
 }
 
 func (s *SecretStrategy) Name() string {

@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwk"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/auth"
 )
@@ -22,10 +23,12 @@ func NewClient(endpoint *auth.JWKsEndpoint, cacheConfig *auth.JWKsCacheConfig) (
 	}
 
 	ctx := context.Background()
-	cache := jwk.NewCache(ctx)
-
-	err := cache.Register(endpoint.URL(), jwk.WithMinRefreshInterval(cacheConfig.RefreshPadding()))
+	cache, err := jwk.NewCache(ctx, httprc.NewClient())
 	if err != nil {
+		return nil, fmt.Errorf("%w: failed to create JWKs cache - %v", auth.ErrJWKsClientError, err)
+	}
+
+	if err := cache.Register(ctx, endpoint.URL(), jwk.WithMinInterval(cacheConfig.RefreshPadding())); err != nil {
 		return nil, fmt.Errorf("%w: failed to register JWKs endpoint - %v", auth.ErrJWKsClientError, err)
 	}
 
@@ -39,30 +42,24 @@ func NewClient(endpoint *auth.JWKsEndpoint, cacheConfig *auth.JWKsCacheConfig) (
 func (c *Client) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	ctx := context.Background()
 
-	keySet, err := c.cache.Get(ctx, c.endpoint.URL())
+	keySet, err := c.cache.Lookup(ctx, c.endpoint.URL())
 	if err != nil {
-		return auth.NewTokenValidationResult(false, "", nil,
+		return auth.NewTokenValidationResult(false, "",
 			fmt.Errorf("%w: failed to get key set - %v", auth.ErrJWKsClientError, err))
 	}
 
 	token, err := jwt.Parse([]byte(tokenString), jwt.WithKeySet(keySet))
 	if err != nil {
-		return auth.NewTokenValidationResult(false, "", nil,
+		return auth.NewTokenValidationResult(false, "",
 			fmt.Errorf("%w: failed to parse token - %v", auth.ErrTokenValidation, err))
 	}
 
-	claims, err := token.AsMap(ctx)
-	if err != nil {
-		return auth.NewTokenValidationResult(false, "", nil,
-			fmt.Errorf("%w: failed to get claims - %v", auth.ErrTokenValidation, err))
-	}
-
 	userID := ""
-	if sub, ok := claims["sub"].(string); ok {
+	if sub, ok := token.Subject(); ok {
 		userID = sub
 	}
 
-	return auth.NewTokenValidationResult(true, userID, claims, nil)
+	return auth.NewTokenValidationResult(true, userID, nil)
 }
 
 func (c *Client) Refresh(ctx context.Context) error {

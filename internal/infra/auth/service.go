@@ -66,7 +66,7 @@ func (s *AuthenticationService) initializeProviders(cfg config.Config) error {
 func (s *AuthenticationService) ValidateToken(tokenString string) *auth.AuthenticationResult {
 	if tokenString == "" {
 		return auth.NewAuthenticationResult(nil,
-			auth.NewTokenValidationResult(false, "", nil, auth.ErrInvalidTokenFormat))
+			auth.NewTokenValidationResult(false, "", auth.ErrInvalidTokenFormat))
 	}
 
 	var lastError error
@@ -88,7 +88,7 @@ func (s *AuthenticationService) ValidateToken(tokenString string) *auth.Authenti
 	}
 
 	return auth.NewAuthenticationResult(nil,
-		auth.NewTokenValidationResult(false, "", nil, lastError))
+		auth.NewTokenValidationResult(false, "", lastError))
 }
 
 func (s *AuthenticationService) ExtractTokenFromHeader(authHeader string) (string, error) {

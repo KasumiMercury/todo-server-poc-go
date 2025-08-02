@@ -175,7 +175,6 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 		result := authService.ValidateToken(tokenString)
 		assert.True(t, result.IsValid())
 		assert.Equal(t, "test-user-123", result.UserID())
-		assert.NotNil(t, result.Claims())
 		assert.Equal(t, "PrivateKey", result.StrategyName())
 	})
 
