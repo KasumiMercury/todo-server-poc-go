@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	taskDomain "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
@@ -25,7 +25,7 @@ func NewTaskServer(ctr controller.Task, healthService service.HealthService) *Ta
 
 // isDomainValidationError checks if the error is a domain validation error
 func isDomainValidationError(err error) bool {
-	return errors.Is(err, task.ErrTitleEmpty) || errors.Is(err, task.ErrTitleTooLong)
+	return errors.Is(err, taskDomain.ErrTitleEmpty) || errors.Is(err, taskDomain.ErrTitleTooLong)
 }
 
 func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
@@ -115,6 +115,10 @@ func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
 	// Check if task exists before deletion
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
+		if errors.Is(err, taskDomain.ErrTaskNotFound) {
+			return c.JSON(404, NewNotFoundError("Task not found"))
+		}
+
 		details := err.Error()
 
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -151,6 +155,10 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
+		if errors.Is(err, taskDomain.ErrTaskNotFound) {
+			return c.JSON(404, NewNotFoundError("Task not found"))
+		}
+
 		details := err.Error()
 
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
@@ -193,6 +201,10 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
+		if errors.Is(err, taskDomain.ErrTaskNotFound) {
+			return c.JSON(404, NewNotFoundError("Task not found"))
+		}
+
 		details := err.Error()
 
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
