@@ -20,8 +20,7 @@ type JWKsStrategy struct {
 }
 
 func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
-
-	if cfg.Auth.JWKs.EndpointURL == "" {
+	if cfg.Auth.JWKs.EndpointURL != "" {
 		endpoint, err := auth.NewJWKsEndpoint(cfg.Auth.JWKs.EndpointURL)
 		if err != nil {
 			return nil, err
