@@ -44,6 +44,8 @@ func (k KeyFormat) String() string {
 		return "PKCS8_DER"
 	case KeyFormatECDSAPEM:
 		return "ECDSA_PEM"
+	case KeyFormatUnknown:
+		return "UNKNOWN"
 	default:
 		return "UNKNOWN"
 	}

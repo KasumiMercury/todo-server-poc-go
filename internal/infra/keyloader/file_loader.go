@@ -66,6 +66,10 @@ func (f *FileLoader) tryLoadWithFormat(data []byte, format auth.KeyFormat) (*rsa
 		return f.loadRSADER(data)
 	case auth.KeyFormatPKCS8DER:
 		return f.loadPKCS8DER(data)
+	case auth.KeyFormatECDSAPEM:
+		return nil, fmt.Errorf("%w: format %s not implemented yet", auth.ErrUnsupportedKeyFormat, format.String())
+	case auth.KeyFormatUnknown:
+		return nil, fmt.Errorf("%w: format %s", auth.ErrUnsupportedKeyFormat, format.String())
 	default:
 		return nil, fmt.Errorf("%w: format %s", auth.ErrUnsupportedKeyFormat, format.String())
 	}
