@@ -114,6 +114,7 @@ func (s *AuthenticationService) GetConfiguredProviders() []string {
 	for i, provider := range s.strategies {
 		names[i] = provider.Name()
 	}
+
 	return names
 }
 

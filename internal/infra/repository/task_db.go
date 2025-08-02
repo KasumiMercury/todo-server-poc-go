@@ -45,6 +45,7 @@ func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, e
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -54,6 +55,7 @@ func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, e
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
+
 		return nil, err
 	}
 
@@ -82,6 +84,7 @@ func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, 
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if title == "" {
 		panic("Title must not be empty")
 	}
@@ -103,6 +106,7 @@ func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -119,9 +123,11 @@ func (t *TaskDB) Update(ctx context.Context, userID, id, title string) (*task.Ta
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
+
 	if title == "" {
 		panic("Title must not be empty")
 	}

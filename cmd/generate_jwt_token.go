@@ -25,6 +25,7 @@ func main() {
 
 	// Sign token with secret key
 	secretKey := "secret-key-for-testing"
+
 	tokenString, err := token.SignedString([]byte(secretKey))
 	if err != nil {
 		fmt.Printf("Error generating JWT token: %v\n", err)

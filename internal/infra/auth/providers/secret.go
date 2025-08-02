@@ -38,9 +38,9 @@ func (s *SecretStrategy) ValidateToken(tokenString string) *auth.TokenValidation
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, auth.ErrInvalidTokenSignature
 		}
+
 		return []byte(s.secretKey), nil
 	})
-
 	if err != nil {
 		return auth.NewTokenValidationResult(false, "", nil, err)
 	}
@@ -50,6 +50,7 @@ func (s *SecretStrategy) ValidateToken(tokenString string) *auth.TokenValidation
 	}
 
 	claims := make(map[string]interface{})
+
 	if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
 		for k, v := range mapClaims {
 			claims[k] = v

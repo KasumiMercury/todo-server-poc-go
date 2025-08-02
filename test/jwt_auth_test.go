@@ -48,12 +48,15 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string)
 	if userID == "test-user" {
 		task1 := task.NewTask("1", "Test Task 1", userID)
 		task2 := task.NewTask("2", "Test Task 2", userID)
+
 		return []*task.Task{task1, task2}, nil
 	}
+
 	if userID == "other-user" {
 		task3 := task.NewTask("3", "Other User Task", userID)
 		return []*task.Task{task3}, nil
 	}
+
 	return []*task.Task{}, nil
 }
 
@@ -61,9 +64,11 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*
 	if userID == "test-user" && id == "1" {
 		return task.NewTask("1", "Test Task 1", userID), nil
 	}
+
 	if userID == "other-user" && id == "3" {
 		return task.NewTask("3", "Other User Task", userID), nil
 	}
+
 	return nil, nil
 }
 
@@ -75,6 +80,7 @@ func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title strin
 	if userID == "test-user" && id == "1" {
 		return task.NewTask(id, title, userID), nil
 	}
+
 	return nil, nil
 }
 
@@ -94,6 +100,7 @@ func generateTestJWTForUser(userID string) string {
 	})
 
 	tokenString, _ := token.SignedString([]byte("test-secret-key-for-testing"))
+
 	return tokenString
 }
 
@@ -120,6 +127,7 @@ func setupTestRouter() *echo.Echo {
 	if err != nil {
 		panic(err)
 	}
+
 	authMiddleware := handler.NewAuthenticationMiddleware(authService)
 	authMiddlewareFunc := authMiddleware.MiddlewareFunc()
 
@@ -161,6 +169,7 @@ func TestJWTAuthenticationUnauthorized(t *testing.T) {
 	t.Run("GET /tasks with invalid JWT token should return 401", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/tasks", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -177,6 +186,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	t.Run("GET /tasks with valid JWT token should return 200", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/tasks", nil)
 		req.Header.Set("Authorization", "Bearer "+testJWT)
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -191,6 +201,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -202,6 +213,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	t.Run("GET /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/tasks/1", nil)
 		req.Header.Set("Authorization", "Bearer "+testJWT)
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -216,6 +228,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -227,6 +240,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 	t.Run("DELETE /tasks/1 with valid JWT token should return 204", func(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", "/tasks/1", nil)
 		req.Header.Set("Authorization", "Bearer "+testJWT)
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -245,6 +259,7 @@ func TestUserTaskSeparation(t *testing.T) {
 		// Test user should see 2 tasks
 		req, _ := http.NewRequest("GET", "/tasks", nil)
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -254,6 +269,7 @@ func TestUserTaskSeparation(t *testing.T) {
 
 		var testUserTasks []map[string]interface{}
 		json.Unmarshal(w.Body.Bytes(), &testUserTasks)
+
 		if len(testUserTasks) != 2 {
 			t.Errorf("Expected test-user to have 2 tasks, got %d", len(testUserTasks))
 		}
@@ -261,6 +277,7 @@ func TestUserTaskSeparation(t *testing.T) {
 		// Other user should see 1 task
 		req, _ = http.NewRequest("GET", "/tasks", nil)
 		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
+
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -270,6 +287,7 @@ func TestUserTaskSeparation(t *testing.T) {
 
 		var otherUserTasks []map[string]interface{}
 		json.Unmarshal(w.Body.Bytes(), &otherUserTasks)
+
 		if len(otherUserTasks) != 1 {
 			t.Errorf("Expected other-user to have 1 task, got %d", len(otherUserTasks))
 		}
@@ -279,6 +297,7 @@ func TestUserTaskSeparation(t *testing.T) {
 		// Test user tries to access other user's task (task ID 3)
 		req, _ := http.NewRequest("GET", "/tasks/3", nil)
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -289,6 +308,7 @@ func TestUserTaskSeparation(t *testing.T) {
 		// Other user tries to access test user's task (task ID 1)
 		req, _ = http.NewRequest("GET", "/tasks/1", nil)
 		req.Header.Set("Authorization", "Bearer "+otherUserJWT)
+
 		w = httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -303,6 +323,7 @@ func TestUserTaskSeparation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testUserJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -313,9 +334,11 @@ func TestUserTaskSeparation(t *testing.T) {
 		// Verify response doesn't contain userID (as per OpenAPI schema)
 		var response map[string]interface{}
 		json.Unmarshal(w.Body.Bytes(), &response)
+
 		if _, exists := response["userId"]; exists {
 			t.Error("Response should not contain userId field")
 		}
+
 		if response["title"] != "Test User New Task" {
 			t.Errorf("Expected title 'Test User New Task', got %s", response["title"])
 		}
@@ -328,6 +351,7 @@ func TestCORSOptionsEndpoint(t *testing.T) {
 	t.Run("OPTIONS /tasks should return CORS headers without authentication", func(t *testing.T) {
 		req, _ := http.NewRequest("OPTIONS", "/tasks", nil)
 		req.Header.Set("Origin", "http://localhost:5173")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -349,6 +373,7 @@ func TestCORSOptionsEndpoint(t *testing.T) {
 
 		// Check if required methods are allowed
 		allowedMethods := w.Header().Get("Access-Control-Allow-Methods")
+
 		requiredMethods := []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 		for _, method := range requiredMethods {
 			if !strings.Contains(allowedMethods, method) {
@@ -368,6 +393,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -382,6 +408,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -397,6 +424,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -412,6 +440,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("POST", "/tasks", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -426,6 +455,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -441,6 +471,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
@@ -456,6 +487,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		req, _ := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
 		req.Header.Set("Authorization", "Bearer "+testJWT)
 		req.Header.Set("Content-Type", "application/json")
+
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 

@@ -55,9 +55,9 @@ func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValida
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, auth.ErrInvalidTokenSignature
 		}
+
 		return &s.loadedPrivateKey.Key().PublicKey, nil
 	})
-
 	if err != nil {
 		return auth.NewTokenValidationResult(false, "", nil, err)
 	}
@@ -67,6 +67,7 @@ func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValida
 	}
 
 	claims := make(map[string]interface{})
+
 	if mapClaims, ok := token.Claims.(jwt.MapClaims); ok {
 		for k, v := range mapClaims {
 			claims[k] = v
@@ -97,5 +98,6 @@ func (s *PrivateKeyStrategy) GetKeyFormat() auth.KeyFormat {
 	if s.loadedPrivateKey != nil {
 		return s.loadedPrivateKey.Format()
 	}
+
 	return auth.KeyFormatUnknown
 }

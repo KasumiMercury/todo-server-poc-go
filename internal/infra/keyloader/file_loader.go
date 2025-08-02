@@ -26,6 +26,7 @@ func (f *FileLoader) LoadPrivateKey(file *auth.PrivateKeyFile) (*auth.LoadedPriv
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("%w: %s", auth.ErrPrivateKeyFileNotFound, file.FilePath())
 		}
+
 		return nil, fmt.Errorf("%w: %v", auth.ErrPrivateKeyFileReadError, err)
 	}
 

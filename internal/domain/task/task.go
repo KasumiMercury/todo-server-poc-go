@@ -43,9 +43,11 @@ func validateTitle(title string) error {
 	if title == "" {
 		return ErrTitleEmpty
 	}
+
 	if len(title) > MaxTitleLength {
 		return ErrTitleTooLong
 	}
+
 	return nil
 }
 
@@ -65,6 +67,8 @@ func (t *Task) UpdateTitle(title string) error {
 	if err := validateTitle(title); err != nil {
 		return err
 	}
+
 	t.title = title
+
 	return nil
 }

@@ -80,6 +80,7 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 		if isDomainValidationError(err) {
 			return c.JSON(400, NewBadRequestError("Bad request", &details))
 		}
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -196,6 +197,7 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		if isDomainValidationError(err) {
 			return c.JSON(400, NewBadRequestError("Bad request", &details))
 		}
+
 		return c.JSON(500, NewInternalServerError("Internal server error", &details))
 	}
 

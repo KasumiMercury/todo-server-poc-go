@@ -12,6 +12,7 @@ func NewJWKsEndpoint(url string) (*JWKsEndpoint, error) {
 	if url == "" {
 		return nil, ErrInvalidJWKsEndpoint
 	}
+
 	return &JWKsEndpoint{url: url}, nil
 }
 

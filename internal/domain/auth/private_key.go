@@ -13,6 +13,7 @@ func NewPrivateKeyFile(filePath string) (*PrivateKeyFile, error) {
 	if filePath == "" {
 		return nil, ErrInvalidPrivateKeyFile
 	}
+
 	return &PrivateKeyFile{filePath: filePath}, nil
 }
 
