@@ -23,6 +23,7 @@ func NewClient(endpoint *auth.JWKsEndpoint, cacheConfig *auth.JWKsCacheConfig) (
 	}
 
 	ctx := context.Background()
+
 	cache, err := jwk.NewCache(ctx, httprc.NewClient())
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to create JWKs cache - %v", auth.ErrJWKsClientError, err)

@@ -43,7 +43,6 @@ func (c *JWKsCacheConfig) RefreshPadding() time.Duration {
 type TokenValidationResult struct {
 	isValid bool
 	userID  string
-	claims  map[string]interface{}
 	err     error
 }
 
