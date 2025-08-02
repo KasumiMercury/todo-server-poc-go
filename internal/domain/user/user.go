@@ -5,8 +5,11 @@ type User struct {
 	username string
 }
 
-func NewUser() *User {
-	return &User{}
+func NewUser(id, username string) *User {
+	return &User{
+		id:       id,
+		username: username,
+	}
 }
 
 func (u *User) ID() string {

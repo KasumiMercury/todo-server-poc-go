@@ -97,7 +97,7 @@ func initDB(dbConfig config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(&repository.TaskModel{})
+	err = db.AutoMigrate(&repository.TaskModel{}) //nolint:exhaustruct
 	if err != nil {
 		return nil, err
 	}

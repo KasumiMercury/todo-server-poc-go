@@ -34,6 +34,7 @@ func (m *AuthenticationMiddleware) MiddlewareFunc() echo.MiddlewareFunc {
 				if result.Error() != nil {
 					errorMessage = "Invalid token: " + result.Error().Error()
 				}
+
 				return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &errorMessage))
 			}
 

@@ -70,5 +70,6 @@ func (c *Client) Refresh(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("%w: failed to refresh JWKs cache - %v", auth.ErrJWKsClientError, err)
 	}
+
 	return nil
 }

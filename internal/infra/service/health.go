@@ -14,9 +14,9 @@ type HealthService interface {
 
 // HealthStatus represents the overall health status of the application
 type HealthStatus struct {
-	Status     string                       `json:"status"`
-	Timestamp  time.Time                   `json:"timestamp"`
-	Components map[string]HealthComponent  `json:"components"`
+	Status     string                     `json:"status"`
+	Timestamp  time.Time                  `json:"timestamp"`
+	Components map[string]HealthComponent `json:"components"`
 }
 
 // HealthComponent represents the health status of an individual component
@@ -41,17 +41,17 @@ func NewHealthService(db *gorm.DB) HealthService {
 func (h *HealthServiceImpl) CheckHealth(ctx context.Context) HealthStatus {
 	timestamp := time.Now()
 	components := make(map[string]HealthComponent)
-	
+
 	// Check database health
 	dbHealth := h.checkDatabaseHealth(ctx)
 	components["database"] = dbHealth
-	
+
 	// Determine overall status
 	overallStatus := "UP"
 	if dbHealth.Status == "DOWN" {
 		overallStatus = "DOWN"
 	}
-	
+
 	return HealthStatus{
 		Status:     overallStatus,
 		Timestamp:  timestamp,
@@ -62,7 +62,7 @@ func (h *HealthServiceImpl) CheckHealth(ctx context.Context) HealthStatus {
 // checkDatabaseHealth checks the health of the database connection
 func (h *HealthServiceImpl) checkDatabaseHealth(ctx context.Context) HealthComponent {
 	start := time.Now()
-	
+
 	// Get the underlying sql.DB to check connection
 	sqlDB, err := h.db.DB()
 	if err != nil {
@@ -73,7 +73,7 @@ func (h *HealthServiceImpl) checkDatabaseHealth(ctx context.Context) HealthCompo
 			},
 		}
 	}
-	
+
 	// Ping the database with context
 	if err := sqlDB.PingContext(ctx); err != nil {
 		return HealthComponent{
@@ -83,9 +83,9 @@ func (h *HealthServiceImpl) checkDatabaseHealth(ctx context.Context) HealthCompo
 			},
 		}
 	}
-	
+
 	responseTime := time.Since(start)
-	
+
 	return HealthComponent{
 		Status: "UP",
 		Details: map[string]interface{}{

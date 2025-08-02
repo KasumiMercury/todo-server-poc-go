@@ -19,6 +19,7 @@ func (t *Task) GetTaskById(ctx context.Context, userID, id string) (*task.Task, 
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -67,6 +68,7 @@ func (t *Task) DeleteTask(ctx context.Context, userID, id string) error {
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
@@ -83,6 +85,7 @@ func (t *Task) UpdateTask(ctx context.Context, userID, id, title string) (*task.
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}

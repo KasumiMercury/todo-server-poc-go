@@ -20,12 +20,7 @@ type JWKsStrategy struct {
 }
 
 func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
-	strategy := &JWKsStrategy{
-		name:       JWKsStrategyName,
-		configured: cfg.Auth.JWKs.EndpointURL != "",
-	}
-
-	if strategy.configured {
+	if cfg.Auth.JWKs.EndpointURL != "" {
 		endpoint, err := auth.NewJWKsEndpoint(cfg.Auth.JWKs.EndpointURL)
 		if err != nil {
 			return nil, err
@@ -41,10 +36,18 @@ func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
 			return nil, err
 		}
 
-		strategy.jwksClient = jwksClient
+		return &JWKsStrategy{
+			name:       JWKsStrategyName,
+			configured: true,
+			jwksClient: jwksClient,
+		}, nil
 	}
 
-	return strategy, nil
+	return &JWKsStrategy{
+		name:       JWKsStrategyName,
+		configured: false,
+		jwksClient: nil,
+	}, nil
 }
 
 func (s *JWKsStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {

@@ -13,6 +13,7 @@ func NewPrivateKeyFile(filePath string) (*PrivateKeyFile, error) {
 	if filePath == "" {
 		return nil, ErrInvalidPrivateKeyFile
 	}
+
 	return &PrivateKeyFile{filePath: filePath}, nil
 }
 
@@ -43,6 +44,8 @@ func (k KeyFormat) String() string {
 		return "PKCS8_DER"
 	case KeyFormatECDSAPEM:
 		return "ECDSA_PEM"
+	case KeyFormatUnknown:
+		return "UNKNOWN"
 	default:
 		return "UNKNOWN"
 	}

@@ -28,6 +28,7 @@ func (m *MetricsService) StartMetricsServer() {
 	go func() {
 		metrics := echo.New()
 		metrics.GET("/metrics", echoprometheus.NewHandler())
+
 		if err := metrics.Start(m.metricPort); err != nil {
 			log.Fatal("Failed to start metrics server:", err)
 		}

@@ -33,6 +33,7 @@ func TestNewJWKsEndpoint(t *testing.T) {
 				if err == nil {
 					t.Errorf("expected error but got none")
 				}
+
 				if endpoint != nil {
 					t.Errorf("expected nil endpoint but got %v", endpoint)
 				}
@@ -40,9 +41,11 @@ func TestNewJWKsEndpoint(t *testing.T) {
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
+
 				if endpoint == nil {
 					t.Errorf("expected endpoint but got nil")
 				}
+
 				if endpoint.URL() != tt.url {
 					t.Errorf("expected URL %s but got %s", tt.url, endpoint.URL())
 				}

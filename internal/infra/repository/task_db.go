@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"time"
 
@@ -21,16 +22,8 @@ func (TaskModel) TableName() string {
 	return "tasks"
 }
 
-func (t *TaskModel) ToDomain() *task.Task {
+func (t TaskModel) ToDomain() *task.Task {
 	return task.NewTask(t.ID, t.Title, t.UserID)
-}
-
-func NewTaskModelFromDomain(task *task.Task) *TaskModel {
-	return &TaskModel{
-		ID:     task.ID(),
-		Title:  task.Title(),
-		UserID: task.UserID(),
-	}
 }
 
 type TaskDB struct {
@@ -45,19 +38,21 @@ func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, e
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
-	var taskModel TaskModel
-	if err := t.db.WithContext(ctx).First(&taskModel, "id = ? AND user_id = ?", id, userID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, task.ErrTaskNotFound
 		}
+
 		return nil, err
 	}
 
-	return taskModel.ToDomain(), nil
+	return taskRecord.ToDomain(), nil
 }
 
 func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
@@ -65,13 +60,21 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Ta
 		panic("UserID must not be empty")
 	}
 
-	var taskModels []TaskModel
-	if err := t.db.WithContext(ctx).Find(&taskModels, "user_id = ?", userID).Error; err != nil {
+	taskRecords, err := gorm.G[TaskModel](t.db).Where("user_id = ?", userID).Find(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, task.ErrTaskNotFound
+		}
+
 		return nil, err
 	}
 
-	tasks := make([]*task.Task, len(taskModels))
-	for i, taskModel := range taskModels {
+	if len(taskRecords) == 0 {
+		return nil, task.ErrTaskNotFound
+	}
+
+	tasks := make([]*task.Task, len(taskRecords))
+	for i, taskModel := range taskRecords {
 		tasks[i] = taskModel.ToDomain()
 	}
 
@@ -82,17 +85,21 @@ func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, 
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if title == "" {
 		panic("Title must not be empty")
 	}
 
 	taskModel := &TaskModel{
-		ID:     uuid.New().String(),
-		Title:  title,
-		UserID: userID,
+		ID:        uuid.New().String(),
+		Title:     title,
+		UserID:    userID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
-	if err := t.db.WithContext(ctx).Create(taskModel).Error; err != nil {
+	result := gorm.WithResult()
+	if err := gorm.G[TaskModel](t.db, result).Create(ctx, taskModel); err != nil {
 		return nil, err
 	}
 
@@ -103,13 +110,13 @@ func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
 
-	result := t.db.WithContext(ctx).Delete(&TaskModel{}, "id = ? AND user_id = ?", id, userID)
-	if result.Error != nil {
-		return result.Error
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).Delete(ctx); err != nil {
+		return err
 	}
 
 	return nil
@@ -119,20 +126,23 @@ func (t *TaskDB) Update(ctx context.Context, userID, id, title string) (*task.Ta
 	if userID == "" {
 		panic("UserID must not be empty")
 	}
+
 	if id == "" {
 		panic("ID must not be empty")
 	}
+
 	if title == "" {
 		panic("Title must not be empty")
 	}
 
-	var taskModel TaskModel
-	if err := t.db.WithContext(ctx).First(&taskModel, "id = ? AND user_id = ?", id, userID).Error; err != nil {
-		return nil, err
+	taskModel := &TaskModel{ //nolint:exhaustruct
+		ID:        id,
+		Title:     title,
+		UserID:    userID,
+		UpdatedAt: time.Now(),
 	}
 
-	taskModel.Title = title
-	if err := t.db.WithContext(ctx).Save(&taskModel).Error; err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).Updates(ctx, *taskModel); err != nil {
 		return nil, err
 	}
 
