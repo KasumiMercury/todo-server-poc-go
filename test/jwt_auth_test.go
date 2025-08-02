@@ -54,6 +54,7 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string)
 
 	if userID == "other-user" {
 		task3 := task.NewTask("3", "Other User Task", userID)
+
 		return []*task.Task{task3}, nil
 	}
 
@@ -69,7 +70,7 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*
 		return task.NewTask("3", "Other User Task", userID), nil
 	}
 
-	return nil, nil
+	return nil, task.ErrTaskNotFound
 }
 
 func (m *MockTaskRepository) Create(ctx context.Context, userID, title string) (*task.Task, error) {
@@ -81,7 +82,7 @@ func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title strin
 		return task.NewTask(id, title, userID), nil
 	}
 
-	return nil, nil
+	return nil, task.ErrTaskNotFound
 }
 
 func (m *MockTaskRepository) Delete(ctx context.Context, userID, id string) error {

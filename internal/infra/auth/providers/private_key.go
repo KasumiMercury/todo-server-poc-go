@@ -21,7 +21,6 @@ type PrivateKeyStrategy struct {
 }
 
 func NewPrivateKeyStrategy(cfg config.Config) (*PrivateKeyStrategy, error) {
-
 	if cfg.Auth.PrivateKeyFilePath != "" {
 		privateKeyLoader := keyloader.NewFileLoader()
 
