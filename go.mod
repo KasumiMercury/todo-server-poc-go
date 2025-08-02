@@ -7,10 +7,8 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo-contrib v0.17.4
-	github.com/labstack/echo-jwt/v4 v4.3.1
 	github.com/labstack/echo/v4 v4.13.4
-	github.com/lestrrat-go/jwx/v3 v3.0.8
-	github.com/lestrrat-go/jwx/v3 v3.0.8
+	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.62.0
