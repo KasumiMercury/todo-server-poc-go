@@ -4,11 +4,6 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 )
 
-// stringPtr creates a pointer to a string value
-func stringPtr(s string) *string {
-	return &s
-}
-
 // NewError creates a new Error using the generated Error struct
 func NewError(code int, message string, details *string) generated.Error {
 	return generated.Error{
