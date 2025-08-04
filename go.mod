@@ -9,9 +9,11 @@ require (
 	github.com/labstack/echo-contrib v0.17.4
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/lestrrat-go/httprc/v3 v3.0.0
-	github.com/lestrrat-go/jwx/v3 v3.0.9
+	github.com/lestrrat-go/jwx/v3 v3.0.10
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/stretchr/testify v1.10.0
+	github.com/testcontainers/testcontainers-go v0.38.0
+	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.62.0
 	golang.org/x/net v0.42.0
 	gorm.io/driver/postgres v1.6.0
@@ -94,8 +96,6 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/testcontainers/testcontainers-go v0.38.0 // indirect
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
