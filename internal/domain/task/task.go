@@ -1,16 +1,10 @@
 package task
 
 import (
-	"errors"
 	"strings"
 )
 
 const MaxTitleLength = 255
-
-var (
-	ErrTitleEmpty   = errors.New("task title cannot be empty")
-	ErrTitleTooLong = errors.New("task title cannot exceed 255 characters")
-)
 
 type Task struct {
 	id     string
