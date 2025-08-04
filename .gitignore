@@ -34,3 +34,4 @@
 
 !.github/**/*
 !/.golangci.yaml
+!/codecov.yml
