@@ -11,11 +11,13 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
 
+// TaskServer handles HTTP requests for task operations.
 type TaskServer struct {
 	controller    controller.Task
 	healthService service.HealthService
 }
 
+// NewTaskServer creates a new TaskServer with the provided controller and health service.
 func NewTaskServer(ctr controller.Task, healthService service.HealthService) *TaskServer {
 	return &TaskServer{
 		controller:    ctr,

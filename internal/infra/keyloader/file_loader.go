@@ -10,12 +10,16 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/auth"
 )
 
+// FileLoader loads private keys from files, supporting multiple key formats.
 type FileLoader struct{}
 
+// NewFileLoader creates a new FileLoader instance.
 func NewFileLoader() *FileLoader {
 	return &FileLoader{}
 }
 
+// LoadPrivateKey loads a private key from the specified file.
+// It tries multiple formats in priority order and returns the first successful parse.
 func (f *FileLoader) LoadPrivateKey(file *auth.PrivateKeyFile) (*auth.LoadedPrivateKey, error) {
 	if file == nil {
 		return nil, fmt.Errorf("%w: file cannot be nil", auth.ErrPrivateKeyLoaderError)
@@ -52,6 +56,7 @@ func (f *FileLoader) getFormatPriority() []auth.KeyFormat {
 	}
 }
 
+// SupportedFormats returns all key formats supported by this loader.
 func (f *FileLoader) SupportedFormats() []auth.KeyFormat {
 	return f.getFormatPriority()
 }

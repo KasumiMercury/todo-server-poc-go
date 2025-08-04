@@ -4,6 +4,7 @@ import (
 	"context"
 )
 
+// TaskRepository defines the interface for task data persistence operations.
 type TaskRepository interface {
 	FindById(ctx context.Context, userID, id string) (*Task, error)
 	FindAllByUserID(ctx context.Context, userID string) ([]*Task, error)

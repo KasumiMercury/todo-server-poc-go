@@ -5,10 +5,14 @@ import (
 	"time"
 )
 
+// PrivateKeyFile represents a private key file location.
+// It encapsulates the file path where a private key is stored.
 type PrivateKeyFile struct {
 	filePath string
 }
 
+// NewPrivateKeyFile creates a new PrivateKeyFile with the provided file path.
+// It returns an error if the file path is empty.
 func NewPrivateKeyFile(filePath string) (*PrivateKeyFile, error) {
 	if filePath == "" {
 		return nil, ErrInvalidPrivateKeyFile
@@ -17,10 +21,12 @@ func NewPrivateKeyFile(filePath string) (*PrivateKeyFile, error) {
 	return &PrivateKeyFile{filePath: filePath}, nil
 }
 
+// FilePath returns the file path of the private key file.
 func (p *PrivateKeyFile) FilePath() string {
 	return p.filePath
 }
 
+// KeyFormat represents the format of a private key file.
 type KeyFormat int
 
 const (
@@ -32,6 +38,7 @@ const (
 	KeyFormatUnknown
 )
 
+// String returns the string representation of the KeyFormat.
 func (k KeyFormat) String() string {
 	switch k {
 	case KeyFormatRSAPEM:
@@ -51,12 +58,15 @@ func (k KeyFormat) String() string {
 	}
 }
 
+// LoadedPrivateKey represents a successfully loaded private key with metadata.
 type LoadedPrivateKey struct {
 	key      *rsa.PrivateKey
 	format   KeyFormat
 	loadedAt time.Time
 }
 
+// NewLoadedPrivateKey creates a new LoadedPrivateKey with the provided key and format.
+// It automatically sets the loaded timestamp to the current time.
 func NewLoadedPrivateKey(key *rsa.PrivateKey, format KeyFormat) *LoadedPrivateKey {
 	return &LoadedPrivateKey{
 		key:      key,
@@ -77,7 +87,11 @@ func (l *LoadedPrivateKey) LoadedAt() time.Time {
 	return l.loadedAt
 }
 
+// PrivateKeyLoader defines the interface for loading private keys from files.
+// It supports multiple key formats and provides information about supported formats.
 type PrivateKeyLoader interface {
+	// LoadPrivateKey loads a private key from the specified file.
 	LoadPrivateKey(file *PrivateKeyFile) (*LoadedPrivateKey, error)
+	// SupportedFormats returns the list of key formats supported by this loader.
 	SupportedFormats() []KeyFormat
 }

@@ -9,10 +9,14 @@ import (
 )
 
 const (
+	// PrivateKeyStrategyName is the identifier for the private key authentication strategy.
 	PrivateKeyStrategyName = "PrivateKey"
-	PrivateKeyPriority     = 300 // Highest priority
+	// PrivateKeyPriority defines the priority of the private key strategy (highest priority).
+	PrivateKeyPriority = 300 // Highest priority
 )
 
+// PrivateKeyStrategy implements JWT token validation using a private key file.
+// It validates tokens by verifying their signature against the private key's public key.
 type PrivateKeyStrategy struct {
 	name             string
 	configured       bool
@@ -20,6 +24,8 @@ type PrivateKeyStrategy struct {
 	loadedPrivateKey *auth.LoadedPrivateKey
 }
 
+// NewPrivateKeyStrategy creates a new PrivateKeyStrategy instance from the provided configuration.
+// It loads the private key from the specified file path if provided.
 func NewPrivateKeyStrategy(cfg config.Config) (*PrivateKeyStrategy, error) {
 	if cfg.Auth.PrivateKeyFilePath != "" {
 		privateKeyLoader := keyloader.NewFileLoader()
@@ -50,6 +56,8 @@ func NewPrivateKeyStrategy(cfg config.Config) (*PrivateKeyStrategy, error) {
 	}, nil
 }
 
+// ValidateToken validates a JWT token using the loaded private key.
+// It verifies the token signature using RSA signing method and extracts the user ID from the 'sub' claim.
 func (s *PrivateKeyStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	if !s.configured || s.loadedPrivateKey == nil {
 		return auth.NewTokenValidationResult(false, "", auth.ErrProviderNotConfigured)
@@ -91,6 +99,7 @@ func (s *PrivateKeyStrategy) Name() string {
 	return s.name
 }
 
+// IsConfigured returns whether this strategy is properly configured with a private key.
 func (s *PrivateKeyStrategy) IsConfigured() bool {
 	return s.configured
 }
@@ -99,6 +108,7 @@ func (s *PrivateKeyStrategy) Priority() int {
 	return PrivateKeyPriority
 }
 
+// GetKeyFormat returns the format of the loaded private key.
 func (s *PrivateKeyStrategy) GetKeyFormat() auth.KeyFormat {
 	if s.loadedPrivateKey != nil {
 		return s.loadedPrivateKey.Format()

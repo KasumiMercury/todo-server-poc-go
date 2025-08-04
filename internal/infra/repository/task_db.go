@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// TaskModel represents the database model for tasks.
+// It defines the structure for task data persistence in the database.
 type TaskModel struct {
 	ID        string    `gorm:"primaryKey;type:varchar(36)"`
 	Title     string    `gorm:"not null;type:varchar(255)"`
@@ -18,18 +20,22 @@ type TaskModel struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
+// TableName returns the database table name for TaskModel.
 func (TaskModel) TableName() string {
 	return "tasks"
 }
 
+// ToDomain converts a TaskModel to a domain Task entity.
 func (t TaskModel) ToDomain() *task.Task {
 	return task.NewTask(t.ID, t.Title, t.UserID)
 }
 
+// TaskDB implements the TaskRepository interface using GORM for database operations.
 type TaskDB struct {
 	db *gorm.DB
 }
 
+// NewTaskDB creates a new TaskDB instance with the provided GORM database connection.
 func NewTaskDB(db *gorm.DB) *TaskDB {
 	return &TaskDB{db: db}
 }
