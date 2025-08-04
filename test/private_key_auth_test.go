@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -163,8 +164,9 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid token with private key", func(t *testing.T) {
+		testUserID := uuid.New().String()
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-			"sub": "test-user-123",
+			"sub": testUserID,
 			"exp": time.Now().Add(time.Hour).Unix(),
 			"iat": time.Now().Unix(),
 		})
@@ -174,7 +176,7 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 
 		result := authService.ValidateToken(tokenString)
 		assert.True(t, result.IsValid())
-		assert.Equal(t, "test-user-123", result.UserID())
+		assert.Equal(t, testUserID, result.UserID())
 		assert.Equal(t, "PrivateKey", result.StrategyName())
 	})
 
@@ -186,7 +188,7 @@ func TestAuthenticationServiceWithPrivateKey(t *testing.T) {
 
 	t.Run("expired token", func(t *testing.T) {
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-			"sub": "test-user-123",
+			"sub": uuid.New().String(),
 			"exp": time.Now().Add(-time.Hour).Unix(), // Expired 1 hour ago
 			"iat": time.Now().Add(-2 * time.Hour).Unix(),
 		})
