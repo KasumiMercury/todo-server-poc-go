@@ -34,6 +34,7 @@ func (q *MockGormQuery) First(ctx context.Context) (*TaskModel, error) {
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).(*TaskModel), args.Error(1)
 }
 
@@ -42,21 +43,25 @@ func (q *MockGormQuery) Find(ctx context.Context) ([]*TaskModel, error) {
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).([]*TaskModel), args.Error(1)
 }
 
 func (q *MockGormQuery) Delete(ctx context.Context) (int64, error) {
 	args := q.db.Called("Delete", ctx, q.query, q.args)
+
 	return args.Get(0).(int64), args.Error(1)
 }
 
 func (q *MockGormQuery) Updates(ctx context.Context, values TaskModel) (int64, error) {
 	args := q.db.Called("Updates", ctx, q.query, q.args, values)
+
 	return args.Get(0).(int64), args.Error(1)
 }
 
 func (q *MockGormQuery) Create(ctx context.Context, value *TaskModel) error {
 	args := q.db.Called("Create", ctx, value)
+
 	return args.Error(0)
 }
 

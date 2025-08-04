@@ -23,6 +23,7 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).([]*task.Task), args.Error(1)
 }
 
@@ -31,6 +32,7 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 
@@ -39,6 +41,7 @@ func (m *MockTaskRepository) Create(ctx context.Context, userID, title string) (
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 
@@ -47,11 +50,13 @@ func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title strin
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
+
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 
 func (m *MockTaskRepository) Delete(ctx context.Context, userID, id string) error {
 	args := m.Called(ctx, userID, id)
+
 	return args.Error(0)
 }
 
@@ -259,6 +264,7 @@ func TestTaskController_GetAllTasks(t *testing.T) {
 				} else {
 					assert.NoError(t, err)
 					assert.Equal(t, len(tt.expectedTasks), len(result))
+
 					for i, expectedTask := range tt.expectedTasks {
 						assert.Equal(t, expectedTask.ID(), result[i].ID())
 						assert.Equal(t, expectedTask.Title(), result[i].Title())
@@ -362,11 +368,13 @@ func TestTaskController_CreateTask(t *testing.T) {
 				// Assert
 				if tt.expectedError != nil {
 					assert.Error(t, err)
+
 					if errors.Is(tt.expectedError, task.ErrTitleEmpty) || errors.Is(tt.expectedError, task.ErrTitleTooLong) {
 						assert.ErrorIs(t, err, tt.expectedError)
 					} else {
 						assert.Equal(t, tt.expectedError.Error(), err.Error())
 					}
+
 					assert.Nil(t, result)
 				} else {
 					assert.NoError(t, err)
@@ -497,11 +505,13 @@ func TestTaskController_UpdateTask(t *testing.T) {
 				// Assert
 				if tt.expectedError != nil {
 					assert.Error(t, err)
+
 					if errors.Is(tt.expectedError, task.ErrTitleEmpty) || errors.Is(tt.expectedError, task.ErrTitleTooLong) {
 						assert.ErrorIs(t, err, tt.expectedError)
 					} else {
 						assert.Equal(t, tt.expectedError.Error(), err.Error())
 					}
+
 					assert.Nil(t, result)
 				} else {
 					assert.NoError(t, err)

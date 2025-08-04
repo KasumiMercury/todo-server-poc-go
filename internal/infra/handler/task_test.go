@@ -33,14 +33,17 @@ func NewMockSimpleTaskRepository() *MockSimpleTaskRepository {
 
 func (m *MockSimpleTaskRepository) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
 	var result []*task.Task
+
 	for _, t := range m.tasks {
 		if t.UserID() == userID {
 			result = append(result, t)
 		}
 	}
+
 	if len(result) == 0 {
 		return []*task.Task{}, nil
 	}
+
 	return result, nil
 }
 
@@ -48,6 +51,7 @@ func (m *MockSimpleTaskRepository) FindById(ctx context.Context, userID, id stri
 	if t, exists := m.tasks[id]; exists && t.UserID() == userID {
 		return t, nil
 	}
+
 	return nil, task.ErrTaskNotFound
 }
 
@@ -55,6 +59,7 @@ func (m *MockSimpleTaskRepository) Create(ctx context.Context, userID, title str
 	id := uuid.New().String()
 	t := task.NewTask(id, title, userID)
 	m.tasks[id] = t
+
 	return t, nil
 }
 
@@ -64,16 +69,20 @@ func (m *MockSimpleTaskRepository) Update(ctx context.Context, userID, id, title
 		if err != nil {
 			return nil, err
 		}
+
 		return t, nil
 	}
+
 	return nil, task.ErrTaskNotFound
 }
 
 func (m *MockSimpleTaskRepository) Delete(ctx context.Context, userID, id string) error {
 	if t, exists := m.tasks[id]; exists && t.UserID() == userID {
 		delete(m.tasks, id)
+
 		return nil
 	}
+
 	return task.ErrTaskNotFound
 }
 
@@ -100,6 +109,7 @@ func setupSimpleTestServer() (*TaskServer, *MockSimpleTaskRepository) {
 	mockHealthService := &MockSimpleHealthService{}
 	taskController := controller.NewTask(mockRepo)
 	server := NewTaskServer(*taskController, mockHealthService)
+
 	return server, mockRepo
 }
 
@@ -130,6 +140,7 @@ func TestSimple_TaskGetAllTasks(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var tasks []generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &tasks)
 	require.NoError(t, err)
 	assert.Len(t, tasks, 2)
@@ -147,6 +158,7 @@ func TestSimple_TaskCreateTask(t *testing.T) {
 	requestBody := `{"title": "New Task"}`
 	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.Set("user_id", testUserID)
@@ -159,6 +171,7 @@ func TestSimple_TaskCreateTask(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	var task generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &task)
 	require.NoError(t, err)
 	assert.NotEmpty(t, task.Id)
@@ -192,6 +205,7 @@ func TestSimple_TaskGetTask(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var task generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &task)
 	require.NoError(t, err)
 	assert.Equal(t, createdTask.ID(), task.Id)
@@ -215,6 +229,7 @@ func TestSimple_TaskUpdateTask(t *testing.T) {
 	requestBody := `{"title": "Updated Task"}`
 	req := httptest.NewRequest(http.MethodPut, "/tasks/"+createdTask.ID(), strings.NewReader(requestBody))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.Set("user_id", testUserID)
@@ -227,6 +242,7 @@ func TestSimple_TaskUpdateTask(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var task generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &task)
 	require.NoError(t, err)
 	assert.Equal(t, createdTask.ID(), task.Id)
@@ -282,6 +298,7 @@ func TestSimple_HealthGetHealth(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var healthResponse generated.HealthStatus
+
 	err = json.Unmarshal(rec.Body.Bytes(), &healthResponse)
 	require.NoError(t, err)
 	assert.Equal(t, generated.HealthStatusStatusUP, healthResponse.Status)
@@ -330,6 +347,7 @@ func TestSimple_ValidationErrors(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(tt.requestBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			c.Set("user_id", testUserID)

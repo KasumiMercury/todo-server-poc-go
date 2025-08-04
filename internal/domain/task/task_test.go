@@ -165,6 +165,7 @@ func TestTaskUpdateTitle(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+
 			assert.Equal(t, tt.expectedTitle, task.Title())
 		})
 	}
