@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// DatabaseConfig holds database connection configuration.
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -14,18 +15,21 @@ type DatabaseConfig struct {
 	Name     string
 }
 
+// JWKsConfig holds JSON Web Key Set configuration for JWT validation.
 type JWKsConfig struct {
 	EndpointURL    string
 	CacheDuration  int // seconds
 	RefreshPadding int // seconds
 }
 
+// AuthConfig holds authentication and JWT configuration.
 type AuthConfig struct {
 	JWTSecret          string
 	JWKs               JWKsConfig
 	PrivateKeyFilePath string
 }
 
+// Config represents the application configuration loaded from environment variables.
 type Config struct {
 	Database     DatabaseConfig
 	Auth         AuthConfig
@@ -33,6 +37,8 @@ type Config struct {
 	ServiceName  string
 }
 
+// Load creates and returns a new Config instance with values loaded from environment variables.
+// It uses default values when environment variables are not set.
 func Load() *Config {
 	return &Config{
 		Database: DatabaseConfig{

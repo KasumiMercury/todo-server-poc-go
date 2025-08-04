@@ -6,16 +6,19 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Task represents the task controller that handles business logic for task operations.
 type Task struct {
 	taskRepo task.TaskRepository
 }
 
+// NewTask creates a new Task controller with the provided repository.
 func NewTask(taskRepo task.TaskRepository) *Task {
 	return &Task{
 		taskRepo: taskRepo,
 	}
 }
 
+// GetTaskById retrieves a specific task by its ID for the given user.
 func (t *Task) GetTaskById(ctx context.Context, userID, id string) (*task.Task, error) {
 	if userID == "" {
 		panic("UserID must not be empty")
@@ -33,6 +36,8 @@ func (t *Task) GetTaskById(ctx context.Context, userID, id string) (*task.Task, 
 	return taskItem, nil
 }
 
+// GetAllTasks retrieves all tasks for the given user.
+// It returns an empty slice if no tasks are found.
 func (t *Task) GetAllTasks(ctx context.Context, userID string) ([]*task.Task, error) {
 	if userID == "" {
 		panic("UserID must not be empty")
@@ -50,6 +55,8 @@ func (t *Task) GetAllTasks(ctx context.Context, userID string) ([]*task.Task, er
 	return tasks, nil
 }
 
+// CreateTask creates a new task with the provided title for the given user.
+// It validates the title using domain validation rules.
 func (t *Task) CreateTask(ctx context.Context, userID, title string) (*task.Task, error) {
 	if userID == "" {
 		panic("UserID must not be empty")
@@ -69,6 +76,7 @@ func (t *Task) CreateTask(ctx context.Context, userID, title string) (*task.Task
 	return taskItem, nil
 }
 
+// DeleteTask removes a task by its ID for the given user.
 func (t *Task) DeleteTask(ctx context.Context, userID, id string) error {
 	if userID == "" {
 		panic("UserID must not be empty")
@@ -86,6 +94,8 @@ func (t *Task) DeleteTask(ctx context.Context, userID, id string) error {
 	return nil
 }
 
+// UpdateTask updates a task's title for the given user.
+// It validates the new title using domain validation rules.
 func (t *Task) UpdateTask(ctx context.Context, userID, id, title string) (*task.Task, error) {
 	if userID == "" {
 		panic("UserID must not be empty")

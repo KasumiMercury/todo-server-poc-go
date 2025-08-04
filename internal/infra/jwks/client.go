@@ -11,12 +11,16 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/auth"
 )
 
+// Client provides JWT token validation using JSON Web Key Sets (JWKs).
+// It manages a cache of public keys fetched from a JWKs endpoint for token verification.
 type Client struct {
 	cache       *jwk.Cache
 	endpoint    *auth.JWKsEndpoint
 	cacheConfig *auth.JWKsCacheConfig
 }
 
+// NewClient creates a new JWKs client with caching capabilities.
+// It registers the JWKs endpoint with the cache for automatic key refresh.
 func NewClient(endpoint *auth.JWKsEndpoint, cacheConfig *auth.JWKsCacheConfig) (*Client, error) {
 	if endpoint == nil {
 		return nil, auth.ErrInvalidJWKsEndpoint
@@ -40,6 +44,8 @@ func NewClient(endpoint *auth.JWKsEndpoint, cacheConfig *auth.JWKsCacheConfig) (
 	}, nil
 }
 
+// ValidateToken validates a JWT token using the cached JWKs.
+// It fetches the appropriate public key from the cache and verifies the token signature.
 func (c *Client) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	ctx := context.Background()
 
@@ -63,6 +69,7 @@ func (c *Client) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	return auth.NewTokenValidationResult(true, userID, nil)
 }
 
+// Refresh manually refreshes the JWKs cache from the endpoint.
 func (c *Client) Refresh(ctx context.Context) error {
 	_, err := c.cache.Refresh(ctx, c.endpoint.URL())
 	if err != nil {

@@ -9,16 +9,22 @@ import (
 )
 
 const (
+	// JWKsStrategyName is the identifier for the JWKs authentication strategy.
 	JWKsStrategyName = "JWKs"
-	JWKsPriority     = 200 // Medium priority
+	// JWKsPriority defines the priority of the JWKs strategy (medium priority).
+	JWKsPriority = 200 // Medium priority
 )
 
+// JWKsStrategy implements JWT token validation using JSON Web Key Sets (JWKs).
+// It fetches public keys from a JWKs endpoint to validate JWT tokens.
 type JWKsStrategy struct {
 	name       string
 	configured bool
 	jwksClient *jwks.Client
 }
 
+// NewJWKsStrategy creates a new JWKsStrategy instance from the provided configuration.
+// It returns a configured strategy if a JWKs endpoint URL is provided, otherwise returns an unconfigured strategy.
 func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
 	if cfg.Auth.JWKs.EndpointURL != "" {
 		endpoint, err := auth.NewJWKsEndpoint(cfg.Auth.JWKs.EndpointURL)
@@ -50,6 +56,8 @@ func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
 	}, nil
 }
 
+// ValidateToken validates a JWT token using the JWKs endpoint.
+// It returns an error result if the strategy is not configured.
 func (s *JWKsStrategy) ValidateToken(tokenString string) *auth.TokenValidationResult {
 	if !s.configured || s.jwksClient == nil {
 		return auth.NewTokenValidationResult(false, "", auth.ErrProviderNotConfigured)
@@ -58,18 +66,22 @@ func (s *JWKsStrategy) ValidateToken(tokenString string) *auth.TokenValidationRe
 	return s.jwksClient.ValidateToken(tokenString)
 }
 
+// Name returns the name of this authentication strategy.
 func (s *JWKsStrategy) Name() string {
 	return s.name
 }
 
+// IsConfigured returns whether this strategy is properly configured with a JWKs endpoint.
 func (s *JWKsStrategy) IsConfigured() bool {
 	return s.configured
 }
 
+// Priority returns the priority of this authentication strategy.
 func (s *JWKsStrategy) Priority() int {
 	return JWKsPriority
 }
 
+// GetClient returns the underlying JWKs client for testing or advanced usage.
 func (s *JWKsStrategy) GetClient() *jwks.Client {
 	return s.jwksClient
 }

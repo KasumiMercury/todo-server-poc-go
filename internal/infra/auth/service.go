@@ -9,10 +9,14 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth/providers"
 )
 
+// AuthenticationService manages multiple authentication strategies and handles JWT token validation.
+// It supports multiple authentication providers (private key, JWKs, secret) with priority-based selection.
 type AuthenticationService struct {
 	strategies []auth.AuthenticationStrategy
 }
 
+// NewAuthenticationService creates a new AuthenticationService with configured authentication strategies.
+// It initializes all available providers and sorts them by priority (highest first).
 func NewAuthenticationService(cfg config.Config) (*AuthenticationService, error) {
 	service := &AuthenticationService{
 		strategies: make([]auth.AuthenticationStrategy, 0),
@@ -63,6 +67,8 @@ func (s *AuthenticationService) initializeProviders(cfg config.Config) error {
 	return nil
 }
 
+// ValidateToken validates a JWT token using the configured authentication strategies.
+// It tries each strategy in priority order and returns the first successful validation result.
 func (s *AuthenticationService) ValidateToken(tokenString string) *auth.AuthenticationResult {
 	if tokenString == "" {
 		return auth.NewAuthenticationResult(nil,
@@ -91,6 +97,8 @@ func (s *AuthenticationService) ValidateToken(tokenString string) *auth.Authenti
 		auth.NewTokenValidationResult(false, "", lastError))
 }
 
+// ExtractTokenFromHeader extracts a JWT token from the Authorization header.
+// It expects the header to be in the format "Bearer <token>".
 func (s *AuthenticationService) ExtractTokenFromHeader(authHeader string) (string, error) {
 	if authHeader == "" {
 		return "", auth.ErrMissingAuthorizationHeader
@@ -109,6 +117,7 @@ func (s *AuthenticationService) ExtractTokenFromHeader(authHeader string) (strin
 	return token, nil
 }
 
+// GetConfiguredProviders returns the names of all configured authentication providers.
 func (s *AuthenticationService) GetConfiguredProviders() []string {
 	names := make([]string, len(s.strategies))
 	for i, provider := range s.strategies {
@@ -118,6 +127,7 @@ func (s *AuthenticationService) GetConfiguredProviders() []string {
 	return names
 }
 
+// GetProviderCount returns the number of configured authentication providers.
 func (s *AuthenticationService) GetProviderCount() int {
 	return len(s.strategies)
 }

@@ -8,16 +8,21 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth"
 )
 
+// AuthenticationMiddleware provides JWT authentication middleware for Echo framework.
+// It validates JWT tokens using the configured authentication service.
 type AuthenticationMiddleware struct {
 	authService *auth.AuthenticationService
 }
 
+// NewAuthenticationMiddleware creates a new AuthenticationMiddleware with the provided authentication service.
 func NewAuthenticationMiddleware(authService *auth.AuthenticationService) *AuthenticationMiddleware {
 	return &AuthenticationMiddleware{
 		authService: authService,
 	}
 }
 
+// MiddlewareFunc returns an Echo middleware function that validates JWT tokens.
+// It extracts the token from the Authorization header, validates it, and stores user information in the context.
 func (m *AuthenticationMiddleware) MiddlewareFunc() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
