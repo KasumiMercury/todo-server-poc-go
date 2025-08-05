@@ -34,6 +34,7 @@ func (t *TaskHandler) extractUserID(c echo.Context) (string, error) {
 	if !ok || userID == "" {
 		return "", errors.New("user ID not found in token")
 	}
+
 	return userID, nil
 }
 
@@ -42,12 +43,14 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	tasks, err := t.controller.GetAllTasks(c.Request().Context(), userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -68,6 +71,7 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
@@ -75,11 +79,13 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	if req.Title == "" {
 		details := "title field is required and cannot be empty"
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
@@ -106,11 +112,13 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
@@ -122,6 +130,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		}
 
 		details := err.Error()
+
 		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -132,6 +141,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	err = t.controller.DeleteTask(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -143,11 +153,13 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
@@ -158,6 +170,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 		}
 
 		details := err.Error()
+
 		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
@@ -178,11 +191,13 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
@@ -190,6 +205,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
@@ -200,6 +216,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		}
 
 		details := err.Error()
+
 		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
