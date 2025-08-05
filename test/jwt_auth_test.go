@@ -124,7 +124,7 @@ func setupTestRouter() *echo.Echo {
 	mockRepo := &MockTaskRepository{}
 	taskController := controller.NewTask(mockRepo)
 	mockHealthService := &MockHealthService{}
-	taskServer := handler.NewTaskServer(*taskController, mockHealthService)
+	apiServer := handler.NewAPIServer(*taskController, mockHealthService)
 
 	// Setup authentication service and middleware
 	authService, err := infraAuth.NewAuthenticationService(*cfg)
@@ -137,7 +137,7 @@ func setupTestRouter() *echo.Echo {
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
-		Handler: taskServer,
+		Handler: apiServer,
 	}
 
 	// Register health endpoint without authentication
