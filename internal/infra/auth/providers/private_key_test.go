@@ -315,6 +315,7 @@ func TestPrivateKeyStrategy_GetKeyFormat(t *testing.T) {
 			name: "RSA PEM format",
 			loadedKey: func() *auth.LoadedPrivateKey {
 				key, _ := rsa.GenerateKey(rand.Reader, 2048)
+
 				return auth.NewLoadedPrivateKey(key, auth.KeyFormatRSAPEM)
 			}(),
 			expectedFormat: auth.KeyFormatRSAPEM,
@@ -323,6 +324,7 @@ func TestPrivateKeyStrategy_GetKeyFormat(t *testing.T) {
 			name: "PKCS8 PEM format",
 			loadedKey: func() *auth.LoadedPrivateKey {
 				key, _ := rsa.GenerateKey(rand.Reader, 2048)
+
 				return auth.NewLoadedPrivateKey(key, auth.KeyFormatPKCS8PEM)
 			}(),
 			expectedFormat: auth.KeyFormatPKCS8PEM,
@@ -374,9 +376,11 @@ func TestPrivateKeyStrategy_ConfiguredState_Consistency(t *testing.T) {
 			t.Parallel()
 
 			var loadedKey *auth.LoadedPrivateKey
+
 			if tt.hasKey {
 				privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 				require.NoError(t, err)
+
 				loadedKey = auth.NewLoadedPrivateKey(privateKey, auth.KeyFormatRSAPEM)
 			}
 

@@ -71,6 +71,7 @@ func NewJWKsStrategy(cfg config.Config) (*JWKsStrategy, error) {
 // NewJWKsStrategyWithValidator creates a new JWKsStrategy instance with a custom validator.
 func NewJWKsStrategyWithValidator(validator JWKSValidator) *JWKsStrategy {
 	configured := validator != nil
+
 	return &JWKsStrategy{
 		name:       JWKsStrategyName,
 		configured: configured,

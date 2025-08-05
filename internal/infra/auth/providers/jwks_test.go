@@ -94,15 +94,18 @@ func TestNewJWKsStrategy(t *testing.T) {
 			t.Parallel()
 
 			// Act
-			var strategy *JWKsStrategy
-			var err error
-			if tt.config.Auth.JWKs.EndpointURL != "" && tt.expectedConfigured {
+			var (
+				strategy *JWKsStrategy
+				err      error
+			)
 
+			if tt.config.Auth.JWKs.EndpointURL != "" && tt.expectedConfigured {
 				if tt.config.Auth.JWKs.EndpointURL != "" {
 					strategy = NewJWKsStrategyWithValidator(mocks.NewMockJWKSValidator(gomock.NewController(t)))
 				} else {
 					strategy = NewJWKsStrategyWithValidator(nil)
 				}
+
 				err = nil
 			} else {
 				strategy, err = NewJWKsStrategy(tt.config)
@@ -312,8 +315,10 @@ func TestJWKsStrategy_GetClient(t *testing.T) {
 			t.Parallel()
 
 			// Arrange
-			var strategy *JWKsStrategy
-			var err error
+			var (
+				strategy *JWKsStrategy
+				err      error
+			)
 
 			if !tt.expectClientNil {
 				if tt.config.Auth.JWKs.EndpointURL != "" {
@@ -321,6 +326,7 @@ func TestJWKsStrategy_GetClient(t *testing.T) {
 				} else {
 					strategy = NewJWKsStrategyWithValidator(nil)
 				}
+
 				err = nil
 			} else {
 				strategy, err = NewJWKsStrategy(tt.config)
@@ -383,12 +389,15 @@ func TestJWKsStrategy_ConfiguredState_Consistency(t *testing.T) {
 			t.Parallel()
 
 			// Arrange
-			var strategy *JWKsStrategy
-			var err error
+			var (
+				strategy *JWKsStrategy
+				err      error
+			)
 
 			if tt.configured {
 				ctrl := gomock.NewController(t)
 				defer ctrl.Finish()
+
 				mockValidator := mocks.NewMockJWKSValidator(ctrl)
 				mockValidator.EXPECT().ValidateToken("test-token").Return(auth.NewTokenValidationResult(true, "test-user", nil)).AnyTimes()
 				strategy = NewJWKsStrategyWithValidator(mockValidator)

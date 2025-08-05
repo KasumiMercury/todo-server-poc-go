@@ -216,6 +216,7 @@ func TestNewTokenValidationResult(t *testing.T) {
 			require.NotNil(t, result)
 			assert.Equal(t, tt.expectedValid, result.IsValid())
 			assert.Equal(t, tt.expectedUserID, result.UserID())
+
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, result.Error(), tt.expectedError)
 			} else {

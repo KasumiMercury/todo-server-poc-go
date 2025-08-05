@@ -260,7 +260,9 @@ func TestLoadedPrivateKey_TimeConsistency(t *testing.T) {
 
 	// Act
 	firstCall := loadedKey.LoadedAt()
+
 	time.Sleep(1 * time.Millisecond) // Small delay
+
 	secondCall := loadedKey.LoadedAt()
 
 	// Assert - LoadedAt should return the same time on multiple calls
@@ -290,6 +292,7 @@ func (m *mockPrivateKeyLoader) LoadPrivateKey(file *PrivateKeyFile) (*LoadedPriv
 	if m.loadError != nil {
 		return nil, m.loadError
 	}
+
 	return m.loadedKey, nil
 }
 

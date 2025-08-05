@@ -29,6 +29,7 @@ func TestNewAuthenticationService(t *testing.T) {
 				mockStrategy.EXPECT().Name().Return("Secret").AnyTimes()
 				mockStrategy.EXPECT().Priority().Return(100).AnyTimes()
 				mockStrategy.EXPECT().IsConfigured().Return(true).AnyTimes()
+
 				return []auth.AuthenticationStrategy{mockStrategy}
 			},
 			expectedError: nil,
@@ -72,6 +73,7 @@ func TestNewAuthenticationService(t *testing.T) {
 			// Setup
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
+
 			strategies := tt.setupMocks(ctrl)
 
 			// Act
@@ -257,6 +259,7 @@ func TestAuthenticationService_ExtractTokenFromHeader(t *testing.T) {
 
 			// Assert
 			assert.Equal(t, tt.expectedToken, token)
+
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.ErrorIs(t, err, tt.expectedError)
@@ -283,6 +286,7 @@ func TestAuthenticationService_GetConfiguredProviders(t *testing.T) {
 				mockStrategy.EXPECT().Name().Return("Secret").AnyTimes()
 				mockStrategy.EXPECT().Priority().Return(100).AnyTimes()
 				mockStrategy.EXPECT().IsConfigured().Return(true).AnyTimes()
+
 				return []auth.AuthenticationStrategy{mockStrategy}
 			},
 			expectedCount:     1,
@@ -315,6 +319,7 @@ func TestAuthenticationService_GetConfiguredProviders(t *testing.T) {
 			// Setup
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
+
 			strategies := tt.setupMocks(ctrl)
 
 			// Arrange
@@ -357,6 +362,7 @@ func TestAuthenticationService_GetProviderCount(t *testing.T) {
 				mockStrategy.EXPECT().Name().Return("Secret").AnyTimes()
 				mockStrategy.EXPECT().Priority().Return(100).AnyTimes()
 				mockStrategy.EXPECT().IsConfigured().Return(true).AnyTimes()
+
 				return []auth.AuthenticationStrategy{mockStrategy}
 			},
 			expectedCount: 1,
@@ -389,6 +395,7 @@ func TestAuthenticationService_GetProviderCount(t *testing.T) {
 			// Setup
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
+
 			strategies := tt.setupMocks(ctrl)
 
 			// Arrange
