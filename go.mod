@@ -15,6 +15,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
 	go.opentelemetry.io/contrib/instrumentation/github.com/labstack/echo/otelecho v0.62.0
+	go.uber.org/mock v0.5.2
 	golang.org/x/net v0.42.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.1

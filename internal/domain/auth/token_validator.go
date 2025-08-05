@@ -1,5 +1,7 @@
 package auth
 
+//go:generate go run go.uber.org/mock/mockgen -source=token_validator.go -destination=../../infra/auth/mocks/auth_mock.go -package=mocks
+
 // TokenValidator defines the interface for JWT token validation.
 // It provides methods to validate tokens and identify the validator.
 type TokenValidator interface {
