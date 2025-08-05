@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"github.com/labstack/echo/v4"
 	"net/http"
-	"time"
 
+	"github.com/labstack/echo/v4"
+
+	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
 
@@ -20,36 +21,25 @@ func NewHealthHandler(healthService service.HealthService) *HealthHandler {
 	}
 }
 
-// HealthResponse represents the response format for health endpoint
-type HealthResponse struct {
-	Status     string                             `json:"status"`
-	Timestamp  time.Time                          `json:"timestamp"`
-	Components map[string]HealthComponentResponse `json:"components"`
-}
-
-// HealthComponentResponse represents the response format for health component
-type HealthComponentResponse struct {
-	Status  string                 `json:"status"`
-	Details map[string]interface{} `json:"details,omitempty"`
-}
-
-// GetHealth handles GET /health requests
+// GetHealth handles GET /health requests and returns OpenAPI-compliant response
 func (h *HealthHandler) GetHealth(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	healthStatus := h.healthService.CheckHealth(ctx)
 
-	// Convert service model to response model
-	response := HealthResponse{
-		Status:     healthStatus.Status,
-		Timestamp:  healthStatus.Timestamp,
-		Components: make(map[string]HealthComponentResponse),
+	// Convert service model to generated response model
+	components := taskHandler.HealthStatus{
+		Status:    taskHandler.HealthStatusStatus(healthStatus.Status),
+		Timestamp: healthStatus.Timestamp,
+		Components: struct { //nolint:exhaustruct
+			Database *taskHandler.HealthComponent `json:"database,omitempty"`
+		}{},
 	}
 
-	for name, component := range healthStatus.Components {
-		response.Components[name] = HealthComponentResponse{
-			Status:  component.Status,
-			Details: component.Details,
+	if dbComponent, exists := healthStatus.Components["database"]; exists {
+		components.Components.Database = &taskHandler.HealthComponent{
+			Status:  taskHandler.HealthComponentStatus(dbComponent.Status),
+			Details: &dbComponent.Details,
 		}
 	}
 
@@ -59,5 +49,5 @@ func (h *HealthHandler) GetHealth(c echo.Context) error {
 		statusCode = http.StatusServiceUnavailable
 	}
 
-	return c.JSON(statusCode, response)
+	return c.JSON(statusCode, components)
 }
