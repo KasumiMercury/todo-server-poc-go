@@ -102,6 +102,7 @@ func TestAuthenticationMiddleware_MiddlewareFunc(t *testing.T) {
 			nextCalled := false
 			next := func(c echo.Context) error {
 				nextCalled = true
+
 				return c.JSON(http.StatusOK, map[string]string{"message": "success"})
 			}
 
@@ -109,6 +110,7 @@ func TestAuthenticationMiddleware_MiddlewareFunc(t *testing.T) {
 			strategy.EXPECT().Name().Return("TestStrategy").AnyTimes()
 			strategy.EXPECT().IsConfigured().Return(true).AnyTimes()
 			strategy.EXPECT().Priority().Return(50).AnyTimes()
+
 			if tt.validationResult != nil {
 				strategy.EXPECT().ValidateToken(gomock.Any()).Return(tt.validationResult).AnyTimes()
 			}
@@ -121,10 +123,12 @@ func TestAuthenticationMiddleware_MiddlewareFunc(t *testing.T) {
 			handler := middlewareFunc(next)
 
 			e := echo.New()
+
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
@@ -139,6 +143,7 @@ func TestAuthenticationMiddleware_MiddlewareFunc(t *testing.T) {
 			if tt.expectNextCalled {
 				userID := c.Get("user_id")
 				authStrategy := c.Get("auth_strategy")
+
 				assert.Equal(t, tt.expectedUserID, userID)
 				assert.Equal(t, tt.expectedAuthStrategy, authStrategy)
 			}
@@ -198,6 +203,7 @@ func TestAuthenticationMiddleware_ErrorResponse(t *testing.T) {
 			strategy.EXPECT().Name().Return("TestStrategy").AnyTimes()
 			strategy.EXPECT().IsConfigured().Return(true).AnyTimes()
 			strategy.EXPECT().Priority().Return(50).AnyTimes()
+
 			if tt.validationResult != nil {
 				strategy.EXPECT().ValidateToken(gomock.Any()).Return(tt.validationResult).AnyTimes()
 			}
@@ -212,10 +218,12 @@ func TestAuthenticationMiddleware_ErrorResponse(t *testing.T) {
 			})
 
 			e := echo.New()
+
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if tt.authHeader != "" {
 				req.Header.Set("Authorization", tt.authHeader)
 			}
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
@@ -227,6 +235,7 @@ func TestAuthenticationMiddleware_ErrorResponse(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, rec.Code)
 
 			assert.Contains(t, rec.Body.String(), tt.expectedMessage)
+
 			if tt.expectDetailsField {
 				assert.Contains(t, rec.Body.String(), "details")
 			}

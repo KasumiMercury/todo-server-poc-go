@@ -60,6 +60,7 @@ func TestTaskGetAllTasks(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var tasks []generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &tasks)
 	require.NoError(t, err)
 	assert.Len(t, tasks, 2)
@@ -96,6 +97,7 @@ func TestTaskCreateTask(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rec.Code)
 
 	var responseTask generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
 	assert.Equal(t, taskID, responseTask.Id)
@@ -130,6 +132,7 @@ func TestTaskGetTask(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var responseTask generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
 	assert.Equal(t, taskID, responseTask.Id)
@@ -170,6 +173,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var responseTask generated.Task
+
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
 	assert.Equal(t, taskID, responseTask.Id)
@@ -240,6 +244,7 @@ func TestHealthGetHealth(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var healthResponse generated.HealthStatus
+
 	err = json.Unmarshal(rec.Body.Bytes(), &healthResponse)
 	require.NoError(t, err)
 	assert.Equal(t, generated.HealthStatusStatusUP, healthResponse.Status)
@@ -345,6 +350,7 @@ func TestTaskNotFound(t *testing.T) {
 				err := server.TaskGetTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
+
 				return nil
 			},
 		},
@@ -365,6 +371,7 @@ func TestTaskNotFound(t *testing.T) {
 				err := server.TaskUpdateTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
+
 				return nil
 			},
 		},
@@ -383,6 +390,7 @@ func TestTaskNotFound(t *testing.T) {
 				err := server.TaskDeleteTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
+
 				return nil
 			},
 		},
@@ -435,14 +443,16 @@ func TestInvalidJSONRequest(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(tt.method, tt.url, strings.NewReader(tt.requestBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			c.Set("user_id", testUserID)
 
 			var err error
-			if tt.method == http.MethodPost {
+			switch tt.method {
+			case http.MethodPost:
 				err = server.TaskCreateTask(c)
-			} else if tt.method == http.MethodPut {
+			case http.MethodPut:
 				parts := strings.Split(tt.url, "/")
 				taskID := parts[len(parts)-1]
 				err = server.TaskUpdateTask(c, taskID)

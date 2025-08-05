@@ -174,6 +174,7 @@ func TestHealthHandler_GetHealth(t *testing.T) {
 			assert.Equal(t, tt.expectedStatusCode, rec.Code)
 
 			var response HealthResponse
+
 			err = json.Unmarshal(rec.Body.Bytes(), &response)
 			require.NoError(t, err)
 
@@ -194,6 +195,7 @@ func TestHealthHandler_GetHealth_ContextHandling(t *testing.T) {
 	mockHealthService := mocks.NewMockHealthService(ctrl)
 	mockHealthService.EXPECT().CheckHealth(gomock.Any()).DoAndReturn(func(ctx context.Context) service.HealthStatus {
 		assert.NotNil(t, ctx)
+
 		return service.HealthStatus{
 			Status:     "UP",
 			Timestamp:  time.Now(),
@@ -255,6 +257,7 @@ func TestHealthHandler_ResponseStructure(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response HealthResponse
+
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
@@ -380,6 +383,7 @@ func TestHealthHandler_ComponentDetailsMapping(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 
 	var response HealthResponse
+
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 

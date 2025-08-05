@@ -101,13 +101,16 @@ func TestCORSMiddleware(t *testing.T) {
 
 			// Arrange
 			e := echo.New()
+
 			req := httptest.NewRequest(tt.requestMethod, "/test", nil)
 			if tt.requestOrigin != "" {
 				req.Header.Set("Origin", tt.requestOrigin)
 			}
+
 			if tt.requestHeaders != "" {
 				req.Header.Set("Access-Control-Request-Headers", tt.requestHeaders)
 			}
+
 			if tt.requestMethod == http.MethodOptions {
 				req.Header.Set("Access-Control-Request-Method", "POST")
 			}
@@ -170,6 +173,7 @@ func TestCORSMiddleware_Configuration(t *testing.T) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.Header.Set("Origin", "https://test.example.com")
+
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -217,6 +221,7 @@ func TestCORSMiddleware_MaxAge(t *testing.T) {
 
 	maxAgeHeader := rec.Header().Get("Access-Control-Max-Age")
 	expectedMaxAge := int((12 * time.Hour).Seconds()) // 43200 seconds
+
 	assert.Equal(t, "43200", maxAgeHeader)
 
 	assert.Equal(t, 43200, expectedMaxAge)
