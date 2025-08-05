@@ -449,6 +449,7 @@ func TestInvalidJSONRequest(t *testing.T) {
 			c.Set("user_id", testUserID)
 
 			var err error
+
 			switch tt.method {
 			case http.MethodPost:
 				err = server.TaskCreateTask(c)
