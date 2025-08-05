@@ -35,6 +35,24 @@ func NewAuthenticationService(cfg config.Config) (*AuthenticationService, error)
 	return service, nil
 }
 
+// NewAuthenticationServiceWithProviders creates a new AuthenticationService with provided strategies.
+func NewAuthenticationServiceWithProviders(strategies []auth.AuthenticationStrategy) (*AuthenticationService, error) {
+	if len(strategies) == 0 {
+		return nil, auth.ErrNoValidProvider
+	}
+
+	service := &AuthenticationService{
+		strategies: strategies,
+	}
+
+	// Sort providers by priority (higher priority first)
+	sort.Slice(service.strategies, func(i, j int) bool {
+		return service.strategies[i].Priority() > service.strategies[j].Priority()
+	})
+
+	return service, nil
+}
+
 func (s *AuthenticationService) initializeProviders(cfg config.Config) error {
 	// Initialize providers based on configuration
 	providerFactories := []func(config.Config) (auth.AuthenticationStrategy, error){
