@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -18,18 +17,16 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/mocks"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -source=../../domain/task/repository.go -destination=mocks/mock_task_repository.go -package=mocks
 
-func setupTestServer(ctrl *gomock.Controller) (*TaskServer, *mocks.MockTaskRepository, *mocks.MockHealthService) {
+func setupTestServer(ctrl *gomock.Controller) (*TaskHandler, *mocks.MockTaskRepository) {
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	mockHealthService := mocks.NewMockHealthService(ctrl)
 	taskController := controller.NewTask(mockRepo)
-	server := NewTaskServer(*taskController, mockHealthService)
+	handler := NewTaskHandler(*taskController)
 
-	return server, mockRepo, mockHealthService
+	return handler, mockRepo
 }
 
 func TestTaskGetAllTasks(t *testing.T) {
@@ -38,7 +35,7 @@ func TestTaskGetAllTasks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -53,7 +50,7 @@ func TestTaskGetAllTasks(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskGetAllTasks(c)
+	err := handler.GetAllTasks(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -72,7 +69,7 @@ func TestTaskCreateTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -90,7 +87,7 @@ func TestTaskCreateTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskCreateTask(c)
+	err := handler.CreateTask(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -110,7 +107,7 @@ func TestTaskGetTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -125,7 +122,7 @@ func TestTaskGetTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskGetTask(c, taskID)
+	err := handler.GetTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
@@ -145,7 +142,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -166,7 +163,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskUpdateTask(c, taskID)
+	err := handler.UpdateTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
@@ -186,7 +183,7 @@ func TestTaskDeleteTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -203,51 +200,11 @@ func TestTaskDeleteTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskDeleteTask(c, taskID)
+	err := handler.DeleteTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-}
-
-func TestHealthGetHealth(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	server, _, mockHealthService := setupTestServer(ctrl)
-
-	mockHealthService.EXPECT().CheckHealth(gomock.Any()).Return(
-		service.HealthStatus{
-			Status:    "UP",
-			Timestamp: time.Now(),
-			Components: map[string]service.HealthComponent{
-				"database": {
-					Status:  "UP",
-					Details: map[string]interface{}{"connection": "mock"},
-				},
-			},
-		},
-	)
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	// Act
-	err := server.HealthGetHealth(c)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var healthResponse generated.HealthStatus
-
-	err = json.Unmarshal(rec.Body.Bytes(), &healthResponse)
-	require.NoError(t, err)
-	assert.Equal(t, generated.HealthStatusStatusUP, healthResponse.Status)
 }
 
 func TestAuthenticationRequired(t *testing.T) {
@@ -256,7 +213,7 @@ func TestAuthenticationRequired(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, _, _ := setupTestServer(ctrl)
+	handler, _ := setupTestServer(ctrl)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
@@ -264,7 +221,7 @@ func TestAuthenticationRequired(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Act
-	err := server.TaskGetAllTasks(c)
+	err := handler.GetAllTasks(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -277,7 +234,7 @@ func TestValidationErrors(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -310,7 +267,7 @@ func TestValidationErrors(t *testing.T) {
 			c.Set("user_id", testUserID)
 
 			// Act
-			err := server.TaskCreateTask(c)
+			err := handler.CreateTask(c)
 
 			// Assert
 			assert.NoError(t, err)
@@ -325,7 +282,7 @@ func TestTaskNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	nonExistentTaskID := uuid.New().String()
@@ -347,7 +304,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskGetTask(c, nonExistentTaskID)
+				err := handler.GetTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -368,7 +325,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskUpdateTask(c, nonExistentTaskID)
+				err := handler.UpdateTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -387,7 +344,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskDeleteTask(c, nonExistentTaskID)
+				err := handler.DeleteTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -412,7 +369,7 @@ func TestInvalidJSONRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, _, _ := setupTestServer(ctrl)
+	handler, _ := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -452,11 +409,11 @@ func TestInvalidJSONRequest(t *testing.T) {
 
 			switch tt.method {
 			case http.MethodPost:
-				err = server.TaskCreateTask(c)
+				err = handler.CreateTask(c)
 			case http.MethodPut:
 				parts := strings.Split(tt.url, "/")
 				taskID := parts[len(parts)-1]
-				err = server.TaskUpdateTask(c, taskID)
+				err = handler.UpdateTask(c, taskID)
 			}
 
 			// Assert
