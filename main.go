@@ -49,7 +49,7 @@ func main() {
 	// Initialize health service
 	healthService := service.NewHealthService(db)
 
-	taskServer := handler.NewTaskServer(
+	apiServer := handler.NewAPIServer(
 		*taskController,
 		healthService,
 	)
@@ -66,7 +66,7 @@ func main() {
 
 	// Create wrapper for generated handlers
 	wrapper := generated.ServerInterfaceWrapper{
-		Handler: taskServer,
+		Handler: apiServer,
 	}
 
 	// Register health endpoint without authentication

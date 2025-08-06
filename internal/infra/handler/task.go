@@ -2,26 +2,24 @@ package handler
 
 import (
 	"errors"
-	"github.com/labstack/echo/v4"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	taskDomain "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
 
-// TaskServer handles HTTP requests for task operations.
-type TaskServer struct {
-	controller    controller.Task
-	healthService service.HealthService
+// TaskHandler handles HTTP requests for task operations.
+type TaskHandler struct {
+	controller controller.Task
 }
 
-// NewTaskServer creates a new TaskServer with the provided controller and health service.
-func NewTaskServer(ctr controller.Task, healthService service.HealthService) *TaskServer {
-	return &TaskServer{
-		controller:    ctr,
-		healthService: healthService,
+// NewTaskHandler creates a new TaskHandler with the provided controller.
+func NewTaskHandler(ctr controller.Task) *TaskHandler {
+	return &TaskHandler{
+		controller: ctr,
 	}
 }
 
@@ -30,20 +28,30 @@ func isDomainValidationError(err error) bool {
 	return errors.Is(err, taskDomain.ErrTitleEmpty) || errors.Is(err, taskDomain.ErrTitleTooLong)
 }
 
-func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
-	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+// extractUserID extracts user ID from JWT context
+func (t *TaskHandler) extractUserID(c echo.Context) (string, error) {
 	userID, ok := c.Get("user_id").(string)
 	if !ok || userID == "" {
-		details := "User ID not found in token"
+		return "", errors.New("user ID not found in token")
+	}
 
-		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+	return userID, nil
+}
+
+func (t *TaskHandler) GetAllTasks(c echo.Context) error {
+	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
+	userID, err := t.extractUserID(c)
+	if err != nil {
+		details := err.Error()
+
+		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	tasks, err := t.controller.GetAllTasks(c.Request().Context(), userID)
 	if err != nil {
 		details := err.Error()
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := make([]taskHandler.Task, 0, len(tasks))
@@ -55,16 +63,16 @@ func (t *TaskServer) TaskGetAllTasks(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(200, res)
+	return c.JSON(http.StatusOK, res)
 }
 
-func (t *TaskServer) TaskCreateTask(c echo.Context) error {
+func (t *TaskHandler) CreateTask(c echo.Context) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
-	userID, ok := c.Get("user_id").(string)
-	if !ok || userID == "" {
-		details := "User ID not found in token"
+	userID, err := t.extractUserID(c)
+	if err != nil {
+		details := err.Error()
 
-		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	var req taskHandler.TaskCreate
@@ -72,23 +80,23 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	if req.Title == "" {
 		details := "title field is required and cannot be empty"
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.CreateTask(c.Request().Context(), userID, req.Title)
 	if err != nil {
 		details := err.Error()
 		if isDomainValidationError(err) {
-			return c.JSON(400, NewBadRequestError("Bad request", &details))
+			return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 		}
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
@@ -96,78 +104,78 @@ func (t *TaskServer) TaskCreateTask(c echo.Context) error {
 		Title: task.Title(),
 	}
 
-	return c.JSON(201, res)
+	return c.JSON(http.StatusCreated, res)
 }
 
-func (t *TaskServer) TaskDeleteTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
-	userID, ok := c.Get("user_id").(string)
-	if !ok || userID == "" {
-		details := "User ID not found in token"
+	userID, err := t.extractUserID(c)
+	if err != nil {
+		details := err.Error()
 
-		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	// Check if task exists before deletion
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
-			return c.JSON(404, NewNotFoundError("Task not found"))
+			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 		}
 
 		details := err.Error()
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	if task == nil {
-		return c.JSON(404, NewNotFoundError("Task not found"))
+		return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 	}
 
 	err = t.controller.DeleteTask(c.Request().Context(), userID, taskId)
 	if err != nil {
 		details := err.Error()
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
-	return c.JSON(204, nil)
+	return c.JSON(http.StatusNoContent, nil)
 }
 
-func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
-	userID, ok := c.Get("user_id").(string)
-	if !ok || userID == "" {
-		details := "User ID not found in token"
+	userID, err := t.extractUserID(c)
+	if err != nil {
+		details := err.Error()
 
-		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
-			return c.JSON(404, NewNotFoundError("Task not found"))
+			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 		}
 
 		details := err.Error()
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	if task == nil {
-		return c.JSON(404, NewNotFoundError("Task not found"))
+		return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 	}
 
 	res := taskHandler.Task{
@@ -175,22 +183,22 @@ func (t *TaskServer) TaskGetTask(c echo.Context, taskId string) error {
 		Title: task.Title(),
 	}
 
-	return c.JSON(200, res)
+	return c.JSON(http.StatusOK, res)
 }
 
-func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
-	userID, ok := c.Get("user_id").(string)
-	if !ok || userID == "" {
-		details := "User ID not found in token"
+	userID, err := t.extractUserID(c)
+	if err != nil {
+		details := err.Error()
 
-		return c.JSON(401, NewUnauthorizedError("Unauthorized", &details))
+		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
 	if taskId == "" {
 		details := "taskId path parameter is required"
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	var req taskHandler.TaskUpdate
@@ -198,22 +206,22 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	if err := c.Bind(&req); err != nil {
 		details := err.Error()
 
-		return c.JSON(400, NewBadRequestError("Bad request", &details))
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
-			return c.JSON(404, NewNotFoundError("Task not found"))
+			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 		}
 
 		details := err.Error()
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	if task == nil {
-		return c.JSON(404, NewNotFoundError("Task not found"))
+		return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 	}
 
 	title := task.Title()
@@ -225,10 +233,10 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 	if err != nil {
 		details := err.Error()
 		if isDomainValidationError(err) {
-			return c.JSON(400, NewBadRequestError("Bad request", &details))
+			return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 		}
 
-		return c.JSON(500, NewInternalServerError("Internal server error", &details))
+		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
 	}
 
 	res := taskHandler.Task{
@@ -236,36 +244,5 @@ func (t *TaskServer) TaskUpdateTask(c echo.Context, taskId string) error {
 		Title: task.Title(),
 	}
 
-	return c.JSON(200, res)
-}
-
-// HealthGetHealth implements the ServerInterface for health endpoint
-func (t *TaskServer) HealthGetHealth(c echo.Context) error {
-	ctx := c.Request().Context()
-
-	healthStatus := t.healthService.CheckHealth(ctx)
-
-	// Convert service model to generated response model
-	components := taskHandler.HealthStatus{
-		Status:    taskHandler.HealthStatusStatus(healthStatus.Status),
-		Timestamp: healthStatus.Timestamp,
-		Components: struct { //nolint:exhaustruct
-			Database *taskHandler.HealthComponent `json:"database,omitempty"`
-		}{},
-	}
-
-	if dbComponent, exists := healthStatus.Components["database"]; exists {
-		components.Components.Database = &taskHandler.HealthComponent{
-			Status:  taskHandler.HealthComponentStatus(dbComponent.Status),
-			Details: &dbComponent.Details,
-		}
-	}
-
-	// Return appropriate HTTP status code
-	statusCode := http.StatusOK
-	if healthStatus.Status == "DOWN" {
-		statusCode = http.StatusServiceUnavailable
-	}
-
-	return c.JSON(statusCode, components)
+	return c.JSON(http.StatusOK, res)
 }

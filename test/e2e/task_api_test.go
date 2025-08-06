@@ -75,7 +75,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	taskRepo := repository.NewTaskDB(db)
 	taskController := controller.NewTask(taskRepo)
 	healthService := service.NewHealthService(db) // Use real implementation for E2E
-	taskServer := handler.NewTaskServer(*taskController, healthService)
+	apiServer := handler.NewAPIServer(*taskController, healthService)
 
 	authService, err := infraAuth.NewAuthenticationService(*cfg)
 	require.NoError(t, err)
@@ -84,7 +84,7 @@ func setupTestServer(t *testing.T) *TestServer {
 	authMiddlewareFunc := authMiddleware.MiddlewareFunc()
 
 	wrapper := generated.ServerInterfaceWrapper{
-		Handler: taskServer,
+		Handler: apiServer,
 	}
 
 	router.GET("/health", wrapper.HealthGetHealth)

@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"time"
 )
 
 // CORSMiddleware returns a Gin middleware that handles CORS headers

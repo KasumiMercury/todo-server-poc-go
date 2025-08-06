@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -18,18 +19,16 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/mocks"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -source=../../domain/task/repository.go -destination=mocks/mock_task_repository.go -package=mocks
 
-func setupTestServer(ctrl *gomock.Controller) (*TaskServer, *mocks.MockTaskRepository, *mocks.MockHealthService) {
+func setupTestServer(ctrl *gomock.Controller) (*TaskHandler, *mocks.MockTaskRepository) {
 	mockRepo := mocks.NewMockTaskRepository(ctrl)
-	mockHealthService := mocks.NewMockHealthService(ctrl)
 	taskController := controller.NewTask(mockRepo)
-	server := NewTaskServer(*taskController, mockHealthService)
+	handler := NewTaskHandler(*taskController)
 
-	return server, mockRepo, mockHealthService
+	return handler, mockRepo
 }
 
 func TestTaskGetAllTasks(t *testing.T) {
@@ -38,7 +37,7 @@ func TestTaskGetAllTasks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -53,7 +52,7 @@ func TestTaskGetAllTasks(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskGetAllTasks(c)
+	err := handler.GetAllTasks(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -72,7 +71,7 @@ func TestTaskCreateTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -90,7 +89,7 @@ func TestTaskCreateTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskCreateTask(c)
+	err := handler.CreateTask(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -110,7 +109,7 @@ func TestTaskGetTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -125,7 +124,7 @@ func TestTaskGetTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskGetTask(c, taskID)
+	err := handler.GetTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
@@ -145,7 +144,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -166,7 +165,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskUpdateTask(c, taskID)
+	err := handler.UpdateTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
@@ -186,7 +185,7 @@ func TestTaskDeleteTask(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
@@ -203,51 +202,11 @@ func TestTaskDeleteTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := server.TaskDeleteTask(c, taskID)
+	err := handler.DeleteTask(c, taskID)
 
 	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
-}
-
-func TestHealthGetHealth(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	server, _, mockHealthService := setupTestServer(ctrl)
-
-	mockHealthService.EXPECT().CheckHealth(gomock.Any()).Return(
-		service.HealthStatus{
-			Status:    "UP",
-			Timestamp: time.Now(),
-			Components: map[string]service.HealthComponent{
-				"database": {
-					Status:  "UP",
-					Details: map[string]interface{}{"connection": "mock"},
-				},
-			},
-		},
-	)
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	// Act
-	err := server.HealthGetHealth(c)
-
-	// Assert
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var healthResponse generated.HealthStatus
-
-	err = json.Unmarshal(rec.Body.Bytes(), &healthResponse)
-	require.NoError(t, err)
-	assert.Equal(t, generated.HealthStatusStatusUP, healthResponse.Status)
 }
 
 func TestAuthenticationRequired(t *testing.T) {
@@ -256,7 +215,7 @@ func TestAuthenticationRequired(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, _, _ := setupTestServer(ctrl)
+	handler, _ := setupTestServer(ctrl)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
@@ -264,7 +223,7 @@ func TestAuthenticationRequired(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	// Act
-	err := server.TaskGetAllTasks(c)
+	err := handler.GetAllTasks(c)
 
 	// Assert
 	assert.NoError(t, err)
@@ -277,7 +236,7 @@ func TestValidationErrors(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -310,7 +269,7 @@ func TestValidationErrors(t *testing.T) {
 			c.Set("user_id", testUserID)
 
 			// Act
-			err := server.TaskCreateTask(c)
+			err := handler.CreateTask(c)
 
 			// Assert
 			assert.NoError(t, err)
@@ -325,7 +284,7 @@ func TestTaskNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, mockRepo, _ := setupTestServer(ctrl)
+	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 	nonExistentTaskID := uuid.New().String()
@@ -347,7 +306,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskGetTask(c, nonExistentTaskID)
+				err := handler.GetTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -368,7 +327,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskUpdateTask(c, nonExistentTaskID)
+				err := handler.UpdateTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -387,7 +346,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := server.TaskDeleteTask(c, nonExistentTaskID)
+				err := handler.DeleteTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -412,7 +371,7 @@ func TestInvalidJSONRequest(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	server, _, _ := setupTestServer(ctrl)
+	handler, _ := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
 
@@ -452,11 +411,11 @@ func TestInvalidJSONRequest(t *testing.T) {
 
 			switch tt.method {
 			case http.MethodPost:
-				err = server.TaskCreateTask(c)
+				err = handler.CreateTask(c)
 			case http.MethodPut:
 				parts := strings.Split(tt.url, "/")
 				taskID := parts[len(parts)-1]
-				err = server.TaskUpdateTask(c, taskID)
+				err = handler.UpdateTask(c, taskID)
 			}
 
 			// Assert
@@ -464,4 +423,433 @@ func TestInvalidJSONRequest(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 		})
 	}
+}
+
+func TestTaskRepositoryErrors(t *testing.T) {
+	t.Parallel()
+
+	testUserID := uuid.New().String()
+
+	tests := []struct {
+		name               string
+		operation          string
+		setupMock          func(*mocks.MockTaskRepository)
+		requestBody        string
+		taskID             string
+		expectedStatusCode int
+		expectedErrorType  string
+	}{
+		{
+			name:      "database connection timeout on GetAllTasks",
+			operation: "GetAllTasks",
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), testUserID).Return(nil, context.DeadlineExceeded)
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "timeout",
+		},
+		{
+			name:      "database connection error on GetAllTasks",
+			operation: "GetAllTasks",
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), testUserID).Return(nil, fmt.Errorf("database connection failed"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "database",
+		},
+		{
+			name:        "constraint violation on CreateTask",
+			operation:   "CreateTask",
+			requestBody: `{"title": "Duplicate Task"}`,
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "Duplicate Task").Return(nil, fmt.Errorf("UNIQUE constraint failed"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "constraint",
+		},
+		{
+			name:        "transaction rollback on CreateTask",
+			operation:   "CreateTask",
+			requestBody: `{"title": "Transaction Failed"}`,
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "Transaction Failed").Return(nil, fmt.Errorf("transaction rolled back"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "transaction",
+		},
+		{
+			name:      "network failure on GetTask",
+			operation: "GetTask",
+			taskID:    uuid.New().String(),
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(nil, fmt.Errorf("network I/O timeout"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "network",
+		},
+		{
+			name:        "optimistic locking failure on UpdateTask",
+			operation:   "UpdateTask",
+			taskID:      uuid.New().String(),
+			requestBody: `{"title": "Updated Task"}`,
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				existingTask := task.NewTask(uuid.New().String(), "Original Task", testUserID)
+				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(existingTask, nil)
+				mockRepo.EXPECT().Update(gomock.Any(), testUserID, gomock.Any(), "Updated Task").Return(nil, fmt.Errorf("optimistic locking failed"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "conflict",
+		},
+		{
+			name:      "foreign key constraint on DeleteTask",
+			operation: "DeleteTask",
+			taskID:    uuid.New().String(),
+			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+				existingTask := task.NewTask(uuid.New().String(), "Task to Delete", testUserID)
+				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(existingTask, nil)
+				mockRepo.EXPECT().Delete(gomock.Any(), testUserID, gomock.Any()).Return(fmt.Errorf("FOREIGN KEY constraint failed"))
+			},
+			expectedStatusCode: http.StatusInternalServerError,
+			expectedErrorType:  "constraint",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			handler, mockRepo := setupTestServer(ctrl)
+			tt.setupMock(mockRepo)
+
+			e := echo.New()
+
+			var (
+				req *http.Request
+				err error
+			)
+
+			switch tt.operation {
+			case "GetAllTasks":
+				req = httptest.NewRequest(http.MethodGet, "/tasks", nil)
+			case "CreateTask":
+				req = httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(tt.requestBody))
+				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			case "GetTask":
+				req = httptest.NewRequest(http.MethodGet, "/tasks/"+tt.taskID, nil)
+			case "UpdateTask":
+				req = httptest.NewRequest(http.MethodPut, "/tasks/"+tt.taskID, strings.NewReader(tt.requestBody))
+				req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			case "DeleteTask":
+				req = httptest.NewRequest(http.MethodDelete, "/tasks/"+tt.taskID, nil)
+			}
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user_id", testUserID)
+
+			// Act
+			switch tt.operation {
+			case "GetAllTasks":
+				err = handler.GetAllTasks(c)
+			case "CreateTask":
+				err = handler.CreateTask(c)
+			case "GetTask":
+				err = handler.GetTask(c, tt.taskID)
+			case "UpdateTask":
+				err = handler.UpdateTask(c, tt.taskID)
+			case "DeleteTask":
+				err = handler.DeleteTask(c, tt.taskID)
+			}
+
+			// Assert
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatusCode, rec.Code)
+
+			if tt.expectedStatusCode >= 400 {
+				var errorResponse generated.Error
+
+				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+				assert.NoError(t, unmarshalErr)
+				assert.NotEmpty(t, errorResponse.Message)
+			}
+		})
+	}
+}
+
+func TestTaskEdgeCaseValidation(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	handler, mockRepo := setupTestServer(ctrl)
+	testUserID := uuid.New().String()
+
+	tests := []struct {
+		name               string
+		requestBody        string
+		expectedStatusCode int
+		setupMock          func()
+	}{
+		{
+			name:               "unicode title",
+			requestBody:        `{"title": "タスク 🚀 Test ñoño ënd"}`,
+			expectedStatusCode: http.StatusCreated,
+			setupMock: func() {
+				taskID := uuid.New().String()
+				createdTask := task.NewTask(taskID, "タスク 🚀 Test ñoño ënd", testUserID)
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "タスク 🚀 Test ñoño ënd").Return(createdTask, nil)
+			},
+		},
+		{
+			name:               "special characters in title",
+			requestBody:        `{"title": "Task with <script>alert('xss')</script> & special chars"}`,
+			expectedStatusCode: http.StatusCreated,
+			setupMock: func() {
+				taskID := uuid.New().String()
+				title := "Task with <script>alert('xss')</script> & special chars"
+				createdTask := task.NewTask(taskID, title, testUserID)
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+			},
+		},
+		{
+			name:               "maximum length title (255 chars)",
+			requestBody:        fmt.Sprintf(`{"title": "%s"}`, strings.Repeat("a", 255)),
+			expectedStatusCode: http.StatusCreated,
+			setupMock: func() {
+				taskID := uuid.New().String()
+				title := strings.Repeat("a", 255)
+				createdTask := task.NewTask(taskID, title, testUserID)
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+			},
+		},
+		{
+			name:               "title with newlines and tabs",
+			requestBody:        `{"title": "Task with\nnewlines\tand\ttabs"}`,
+			expectedStatusCode: http.StatusCreated,
+			setupMock: func() {
+				taskID := uuid.New().String()
+				title := "Task with\nnewlines\tand\ttabs"
+				createdTask := task.NewTask(taskID, title, testUserID)
+				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			tt.setupMock()
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(tt.requestBody))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user_id", testUserID)
+
+			// Act
+			err := handler.CreateTask(c)
+
+			// Assert
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatusCode, rec.Code)
+
+			if tt.expectedStatusCode == http.StatusCreated {
+				var responseTask generated.Task
+
+				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
+				require.NoError(t, err)
+				assert.NotEmpty(t, responseTask.Id)
+				assert.NotEmpty(t, responseTask.Title)
+			}
+		})
+	}
+}
+
+func TestTaskMalformedRequests(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	handler, _ := setupTestServer(ctrl)
+	testUserID := uuid.New().String()
+
+	tests := []struct {
+		name               string
+		requestBody        string
+		contentType        string
+		expectedStatusCode int
+	}{
+		{
+			name:               "wrong content type",
+			requestBody:        `{"title": "Test Task"}`,
+			contentType:        "text/plain",
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "XML instead of JSON",
+			requestBody:        `<task><title>Test Task</title></task>`,
+			contentType:        echo.MIMEApplicationJSON,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "empty request body",
+			requestBody:        "",
+			contentType:        echo.MIMEApplicationJSON,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "null JSON",
+			requestBody:        "null",
+			contentType:        echo.MIMEApplicationJSON,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "JSON array instead of object",
+			requestBody:        `[{"title": "Task 1"}, {"title": "Task 2"}]`,
+			contentType:        echo.MIMEApplicationJSON,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:               "malformed JSON with trailing comma",
+			requestBody:        `{"title": "Test Task",}`,
+			contentType:        echo.MIMEApplicationJSON,
+			expectedStatusCode: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(tt.requestBody))
+			req.Header.Set(echo.HeaderContentType, tt.contentType)
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			c.Set("user_id", testUserID)
+
+			// Act
+			err := handler.CreateTask(c)
+
+			// Assert
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatusCode, rec.Code)
+
+			if tt.expectedStatusCode >= 400 {
+				var errorResponse generated.Error
+
+				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
+				assert.NoError(t, unmarshalErr)
+				assert.NotEmpty(t, errorResponse.Message)
+			}
+		})
+	}
+}
+
+func TestTaskContextErrors(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	handler, _ := setupTestServer(ctrl)
+
+	tests := []struct {
+		name               string
+		setupContext       func(echo.Context)
+		setupMock          func()
+		operation          string
+		expectedStatusCode int
+	}{
+		{
+			name: "empty user_id string",
+			setupContext: func(c echo.Context) {
+				c.Set("user_id", "")
+			},
+			setupMock:          func() {},
+			operation:          "GetAllTasks",
+			expectedStatusCode: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			tt.setupMock()
+
+			e := echo.New()
+			req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			tt.setupContext(c)
+
+			// Act
+			var err error
+
+			switch tt.operation {
+			case "GetAllTasks":
+				err = handler.GetAllTasks(c)
+			}
+
+			// Assert
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedStatusCode, rec.Code)
+		})
+	}
+}
+
+func TestTaskConcurrentOperations(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	handler, mockRepo := setupTestServer(ctrl)
+	testUserID := uuid.New().String()
+	testTaskID := uuid.New().String()
+
+	existingTask := task.NewTask(testTaskID, "Original Task", testUserID)
+
+	// First call succeeds
+	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(existingTask, nil).Times(1)
+	// Second call fails due to concurrent modification
+	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(nil, fmt.Errorf("record modified by another transaction")).Times(1)
+
+	e := echo.New()
+
+	req1 := httptest.NewRequest(http.MethodGet, "/tasks/"+testTaskID, nil)
+	rec1 := httptest.NewRecorder()
+	c1 := e.NewContext(req1, rec1)
+	c1.Set("user_id", testUserID)
+
+	req2 := httptest.NewRequest(http.MethodGet, "/tasks/"+testTaskID, nil)
+	rec2 := httptest.NewRecorder()
+	c2 := e.NewContext(req2, rec2)
+	c2.Set("user_id", testUserID)
+
+	// Act
+	err1 := handler.GetTask(c1, testTaskID)
+	err2 := handler.GetTask(c2, testTaskID)
+
+	// Assert
+	assert.NoError(t, err1)
+	assert.NoError(t, err2)
+
+	assert.True(t, (rec1.Code == http.StatusOK && rec2.Code == http.StatusInternalServerError) ||
+		(rec1.Code == http.StatusInternalServerError && rec2.Code == http.StatusOK))
 }
