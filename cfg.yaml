@@ -4,4 +4,4 @@ generate:
   echo-server: true
   models: true
   embedded-spec: true
-output: ./internal/infra/handler/generated/task.gen.go
+output: ./generated/task.gen.go
