@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/main
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /app/main cmd/main.go
 
 FROM gcr.io/distroless/static-debian12 AS runner
 
@@ -27,4 +27,4 @@ WORKDIR /app
 
 RUN go install github.com/air-verse/air@latest
 
-CMD ["air", "-c", ".air.toml"]
+CMD ["air", "-c", ".air.toml", "cmd/main.go"]
