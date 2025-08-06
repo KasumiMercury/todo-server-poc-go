@@ -17,8 +17,8 @@ CMD ["/main"]
 
 FROM golang:1.24.5-alpine AS dev
 
-ENV CGO_ENABLED 0
-ENV GO111MODULE auto
+ENV CGO_ENABLED=0
+ENV GO111MODULE=auto
 
 RUN apk update && \
     apk add --no-cache bash
