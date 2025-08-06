@@ -526,8 +526,11 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			e := echo.New()
-			var req *http.Request
-			var err error
+
+			var (
+				req *http.Request
+				err error
+			)
 
 			switch tt.operation {
 			case "GetAllTasks":
@@ -568,6 +571,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 
 			if tt.expectedStatusCode >= 400 {
 				var errorResponse generated.Error
+
 				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 				assert.NoError(t, unmarshalErr)
 				assert.NotEmpty(t, errorResponse.Message)
@@ -660,6 +664,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 
 			if tt.expectedStatusCode == http.StatusCreated {
 				var responseTask generated.Task
+
 				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 				require.NoError(t, err)
 				assert.NotEmpty(t, responseTask.Id)
@@ -744,6 +749,7 @@ func TestTaskMalformedRequests(t *testing.T) {
 
 			if tt.expectedStatusCode >= 400 {
 				var errorResponse generated.Error
+
 				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 				assert.NoError(t, unmarshalErr)
 				assert.NotEmpty(t, errorResponse.Message)
@@ -794,6 +800,7 @@ func TestTaskContextErrors(t *testing.T) {
 
 			// Act
 			var err error
+
 			switch tt.operation {
 			case "GetAllTasks":
 				err = handler.GetAllTasks(c)

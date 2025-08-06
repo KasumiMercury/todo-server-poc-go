@@ -237,6 +237,7 @@ func TestHealthHandler_ServiceError(t *testing.T) {
 			assert.Equal(t, tt.expectedStatusCode, rec.Code)
 
 			var response generated.HealthStatus
+
 			err = json.Unmarshal(rec.Body.Bytes(), &response)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedStatus, string(response.Status))
@@ -346,6 +347,7 @@ func TestHealthHandler_ResponseMarshaling(t *testing.T) {
 				assert.NotEmpty(t, rec.Body.String())
 
 				var response generated.HealthStatus
+
 				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &response)
 				assert.NoError(t, unmarshalErr)
 			}
@@ -396,6 +398,7 @@ func TestHealthHandler_ContextTimeout(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 50*time.Millisecond)
 	defer cancel()
+
 	c.SetRequest(c.Request().WithContext(ctx))
 
 	// Act
@@ -405,6 +408,7 @@ func TestHealthHandler_ContextTimeout(t *testing.T) {
 	require.NoError(t, err)
 
 	var response generated.HealthStatus
+
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 }

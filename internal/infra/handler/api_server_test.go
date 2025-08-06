@@ -36,6 +36,7 @@ func TestNewAPIServer(t *testing.T) {
 				mockRepo := mocks.NewMockTaskRepository(ctrl)
 				taskController := controller.NewTask(mockRepo)
 				mockHealthService := mocks.NewMockHealthService(ctrl)
+
 				return *taskController, mockHealthService
 			},
 			expectedNil:         false,
@@ -45,6 +46,7 @@ func TestNewAPIServer(t *testing.T) {
 			name: "nil task controller",
 			setupMocks: func(ctrl *gomock.Controller) (controller.Task, service.HealthService) {
 				mockHealthService := mocks.NewMockHealthService(ctrl)
+
 				return controller.Task{}, mockHealthService
 			},
 			expectedNil:         false,
@@ -55,6 +57,7 @@ func TestNewAPIServer(t *testing.T) {
 			setupMocks: func(ctrl *gomock.Controller) (controller.Task, service.HealthService) {
 				mockRepo := mocks.NewMockTaskRepository(ctrl)
 				taskController := controller.NewTask(mockRepo)
+
 				return *taskController, nil
 			},
 			expectedNil:         false,
@@ -80,6 +83,7 @@ func TestNewAPIServer(t *testing.T) {
 				assert.Nil(t, apiServer)
 			} else {
 				assert.NotNil(t, apiServer)
+
 				if tt.expectedFieldsValid {
 					assert.NotNil(t, apiServer.taskHandler)
 					assert.NotNil(t, apiServer.healthHandler)
@@ -164,6 +168,7 @@ func TestAPIServer_HealthGetHealth(t *testing.T) {
 			assert.Equal(t, tt.expectedStatusCode, rec.Code)
 
 			var response generated.HealthStatus
+
 			err = json.Unmarshal(rec.Body.Bytes(), &response)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedStatus, string(response.Status))
@@ -247,6 +252,7 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 
 			if tt.expectedStatusCode == http.StatusOK {
 				var tasks []generated.Task
+
 				err = json.Unmarshal(rec.Body.Bytes(), &tasks)
 				require.NoError(t, err)
 				assert.Len(t, tasks, tt.expectedTaskCount)
@@ -326,6 +332,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(tt.requestBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
@@ -342,6 +349,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 
 			if tt.expectedStatusCode == http.StatusCreated {
 				var responseTask generated.Task
+
 				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedTitle, responseTask.Title)
@@ -429,6 +437,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 
 			if tt.expectedStatusCode == http.StatusOK {
 				var responseTask generated.Task
+
 				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedTitle, responseTask.Title)
@@ -518,6 +527,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			e := echo.New()
 			req := httptest.NewRequest(http.MethodPut, "/tasks/"+tt.taskID, strings.NewReader(tt.requestBody))
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 
@@ -534,6 +544,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 
 			if tt.expectedStatusCode == http.StatusOK {
 				var responseTask generated.Task
+
 				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedTitle, responseTask.Title)
