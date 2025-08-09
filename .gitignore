@@ -37,3 +37,4 @@
 !/codecov.yml
 !/atlas.hcl
 !/Taskfile.yml
+!/migrations/
