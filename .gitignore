@@ -36,3 +36,4 @@
 !/.golangci.yaml
 !/codecov.yml
 !/atlas.hcl
+!/Taskfile.yml

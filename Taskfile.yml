@@ -1,0 +1,9 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  inspect:
+    cmd: atlas schema inspect --env gorm --url "env://src"
+  migrate-diff:
+    cmd: atlas migrate diff --env gorm
