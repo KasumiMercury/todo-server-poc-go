@@ -57,7 +57,7 @@ func Load() *Config {
 			},
 			PrivateKeyFilePath: getEnv("JWT_PRIVATE_KEY_FILE", ""),
 		},
-		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhsot:3000"), ","),
+		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhost:3000"), ","),
 		ServiceName:  getEnv("SERVICE_NAME", "todo-server"),
 	}
 }
