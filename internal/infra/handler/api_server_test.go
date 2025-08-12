@@ -16,10 +16,28 @@ import (
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/mocks"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
+
+// Helper functions for creating domain objects from strings in tests
+func createTaskID(s string) task.TaskID {
+	taskID, err := task.NewTaskID(s)
+	if err != nil {
+		panic("failed to create task ID: " + err.Error())
+	}
+	return taskID
+}
+
+func createUserID(s string) user.UserID {
+	userID, err := user.NewUserID(s)
+	if err != nil {
+		panic("failed to create user ID: " + err.Error())
+	}
+	return userID
+}
 
 func TestNewAPIServer(t *testing.T) {
 	t.Parallel()
@@ -183,16 +201,16 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 	tests := []struct {
 		name               string
 		userID             string
-		setupMock          func(*mocks.MockTaskRepository, string)
+		setupMock          func(*mocks.MockTaskRepository, user.UserID)
 		expectedStatusCode int
 		expectedTaskCount  int
 	}{
 		{
 			name:   "successful retrieval of tasks",
 			userID: uuid.New().String(),
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
-				task1 := task.NewTask(uuid.New().String(), "Task 1", userID)
-				task2 := task.NewTask(uuid.New().String(), "Task 2", userID)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
+				task1 := task.NewTask(createTaskID(uuid.New().String()), "Task 1", userID)
+				task2 := task.NewTask(createTaskID(uuid.New().String()), "Task 2", userID)
 				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return([]*task.Task{task1, task2}, nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -201,7 +219,7 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 		{
 			name:   "empty task list",
 			userID: uuid.New().String(),
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return([]*task.Task{}, nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -210,7 +228,7 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 		{
 			name:   "missing user_id in context",
 			userID: "",
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				// No mock expectations - should fail before repository call
 			},
 			expectedStatusCode: http.StatusUnauthorized,
@@ -230,7 +248,11 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			tt.setupMock(mockRepo, tt.userID)
+			var domainUserID user.UserID
+			if tt.userID != "" {
+				domainUserID = createUserID(tt.userID)
+			}
+			tt.setupMock(mockRepo, domainUserID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
 
@@ -268,7 +290,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 		name               string
 		userID             string
 		requestBody        string
-		setupMock          func(*mocks.MockTaskRepository, string)
+		setupMock          func(*mocks.MockTaskRepository, user.UserID)
 		expectedStatusCode int
 		expectedTitle      string
 	}{
@@ -276,8 +298,8 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			name:        "successful task creation",
 			userID:      uuid.New().String(),
 			requestBody: `{"title": "New Task"}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
-				taskID := uuid.New().String()
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
+				taskID := createTaskID(uuid.New().String())
 				createdTask := task.NewTask(taskID, "New Task", userID)
 				mockRepo.EXPECT().Create(gomock.Any(), userID, "New Task").Return(createdTask, nil)
 			},
@@ -288,7 +310,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			name:        "invalid JSON request",
 			userID:      uuid.New().String(),
 			requestBody: `{"title": "Invalid JSON"`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				// No mock expectations - should fail before repository call
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -297,7 +319,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			name:        "empty title validation",
 			userID:      uuid.New().String(),
 			requestBody: `{"title": ""}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				// No mock expectations - should fail validation
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -306,7 +328,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			name:        "missing user_id in context",
 			userID:      "",
 			requestBody: `{"title": "Test Task"}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository, userID string) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				// No mock expectations - should fail authentication
 			},
 			expectedStatusCode: http.StatusUnauthorized,
@@ -325,7 +347,11 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			tt.setupMock(mockRepo, tt.userID)
+			var domainUserID user.UserID
+			if tt.userID != "" {
+				domainUserID = createUserID(tt.userID)
+			}
+			tt.setupMock(mockRepo, domainUserID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
 
@@ -368,7 +394,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 		name               string
 		userID             string
 		taskID             string
-		setupMock          func(*mocks.MockTaskRepository)
+		setupMock          func(*mocks.MockTaskRepository, user.UserID, task.TaskID)
 		expectedStatusCode int
 		expectedTitle      string
 	}{
@@ -376,9 +402,9 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			name:   "successful task retrieval",
 			userID: testUserID,
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(testTaskID, "Test Task", testUserID)
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(existingTask, nil)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				existingTask := task.NewTask(taskID, "Test Task", userID)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedTitle:      "Test Task",
@@ -387,8 +413,8 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			name:   "task not found",
 			userID: testUserID,
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(nil, task.ErrTaskNotFound)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(nil, task.ErrTaskNotFound)
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
@@ -396,7 +422,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			name:   "missing user_id in context",
 			userID: "",
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
 				// No mock expectations - should fail authentication
 			},
 			expectedStatusCode: http.StatusUnauthorized,
@@ -415,7 +441,15 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			tt.setupMock(mockRepo)
+			var domainUserID user.UserID
+			var domainTaskID task.TaskID
+			if tt.userID != "" {
+				domainUserID = createUserID(tt.userID)
+			}
+			if tt.taskID != "" {
+				domainTaskID = createTaskID(tt.taskID)
+			}
+			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
 
@@ -458,7 +492,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 		userID             string
 		taskID             string
 		requestBody        string
-		setupMock          func(*mocks.MockTaskRepository)
+		setupMock          func(*mocks.MockTaskRepository, user.UserID, task.TaskID)
 		expectedStatusCode int
 		expectedTitle      string
 	}{
@@ -467,11 +501,11 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			userID:      testUserID,
 			taskID:      testTaskID,
 			requestBody: `{"title": "Updated Task"}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(testTaskID, "Original Task", testUserID)
-				updatedTask := task.NewTask(testTaskID, "Updated Task", testUserID)
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(existingTask, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), testUserID, testTaskID, "Updated Task").Return(updatedTask, nil)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				existingTask := task.NewTask(taskID, "Original Task", userID)
+				updatedTask := task.NewTask(taskID, "Updated Task", userID)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
+				mockRepo.EXPECT().Update(gomock.Any(), userID, taskID, "Updated Task").Return(updatedTask, nil)
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedTitle:      "Updated Task",
@@ -481,8 +515,8 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			userID:      testUserID,
 			taskID:      testTaskID,
 			requestBody: `{"title": "Updated Task"}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(nil, task.ErrTaskNotFound)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(nil, task.ErrTaskNotFound)
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
@@ -491,7 +525,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			userID:      testUserID,
 			taskID:      testTaskID,
 			requestBody: `{"title": }`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
 				// No mock expectations - should fail before repository call
 			},
 			expectedStatusCode: http.StatusBadRequest,
@@ -501,7 +535,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			userID:      "",
 			taskID:      testTaskID,
 			requestBody: `{"title": "Updated Task"}`,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
 				// No mock expectations - should fail authentication
 			},
 			expectedStatusCode: http.StatusUnauthorized,
@@ -520,7 +554,15 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			tt.setupMock(mockRepo)
+			var domainUserID user.UserID
+			var domainTaskID task.TaskID
+			if tt.userID != "" {
+				domainUserID = createUserID(tt.userID)
+			}
+			if tt.taskID != "" {
+				domainTaskID = createTaskID(tt.taskID)
+			}
+			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
 
@@ -563,17 +605,17 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 		name               string
 		userID             string
 		taskID             string
-		setupMock          func(*mocks.MockTaskRepository)
+		setupMock          func(*mocks.MockTaskRepository, user.UserID, task.TaskID)
 		expectedStatusCode int
 	}{
 		{
 			name:   "successful task deletion",
 			userID: testUserID,
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(testTaskID, "Task to Delete", testUserID)
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(existingTask, nil)
-				mockRepo.EXPECT().Delete(gomock.Any(), testUserID, testTaskID).Return(nil)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				existingTask := task.NewTask(taskID, "Task to Delete", userID)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
+				mockRepo.EXPECT().Delete(gomock.Any(), userID, taskID).Return(nil)
 			},
 			expectedStatusCode: http.StatusNoContent,
 		},
@@ -581,8 +623,8 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			name:   "task not found",
 			userID: testUserID,
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(nil, task.ErrTaskNotFound)
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(nil, task.ErrTaskNotFound)
 			},
 			expectedStatusCode: http.StatusNotFound,
 		},
@@ -590,7 +632,7 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			name:   "missing user_id in context",
 			userID: "",
 			taskID: testTaskID,
-			setupMock: func(mockRepo *mocks.MockTaskRepository) {
+			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
 				// No mock expectations - should fail authentication
 			},
 			expectedStatusCode: http.StatusUnauthorized,
@@ -609,7 +651,15 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			tt.setupMock(mockRepo)
+			var domainUserID user.UserID
+			var domainTaskID task.TaskID
+			if tt.userID != "" {
+				domainUserID = createUserID(tt.userID)
+			}
+			if tt.taskID != "" {
+				domainTaskID = createTaskID(tt.taskID)
+			}
+			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
 

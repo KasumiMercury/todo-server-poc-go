@@ -40,10 +40,11 @@ func TestTaskGetAllTasks(t *testing.T) {
 	handler, mockRepo := setupTestServer(ctrl)
 
 	testUserID := uuid.New().String()
+	userID := createUserID(testUserID)
 
-	task1 := task.NewTask(uuid.New().String(), "Task 1", testUserID)
-	task2 := task.NewTask(uuid.New().String(), "Task 2", testUserID)
-	mockRepo.EXPECT().FindAllByUserID(gomock.Any(), testUserID).Return([]*task.Task{task1, task2}, nil)
+	task1 := task.NewTask(createTaskID(uuid.New().String()), "Task 1", userID)
+	task2 := task.NewTask(createTaskID(uuid.New().String()), "Task 2", userID)
+	mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return([]*task.Task{task1, task2}, nil)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
@@ -75,9 +76,10 @@ func TestTaskCreateTask(t *testing.T) {
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
+	userID := createUserID(testUserID)
 
-	createdTask := task.NewTask(taskID, "New Task", testUserID)
-	mockRepo.EXPECT().Create(gomock.Any(), testUserID, "New Task").Return(createdTask, nil)
+	createdTask := task.NewTask(createTaskID(taskID), "New Task", userID)
+	mockRepo.EXPECT().Create(gomock.Any(), userID, "New Task").Return(createdTask, nil)
 
 	e := echo.New()
 	requestBody := `{"title": "New Task"}`
@@ -113,9 +115,11 @@ func TestTaskGetTask(t *testing.T) {
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
+	userID := createUserID(testUserID)
+	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskID, "Test Task", testUserID)
-	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, taskID).Return(existingTask, nil)
+	existingTask := task.NewTask(taskDomainID, "Test Task", userID)
+	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/tasks/"+taskID, nil)
@@ -148,12 +152,14 @@ func TestTaskUpdateTask(t *testing.T) {
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
+	userID := createUserID(testUserID)
+	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskID, "Original Task", testUserID)
-	updatedTask := task.NewTask(taskID, "Updated Task", testUserID)
+	existingTask := task.NewTask(taskDomainID, "Original Task", userID)
+	updatedTask := task.NewTask(taskDomainID, "Updated Task", userID)
 
-	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, taskID).Return(existingTask, nil)
-	mockRepo.EXPECT().Update(gomock.Any(), testUserID, taskID, "Updated Task").Return(updatedTask, nil)
+	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
+	mockRepo.EXPECT().Update(gomock.Any(), userID, taskDomainID, "Updated Task").Return(updatedTask, nil)
 
 	e := echo.New()
 	requestBody := `{"title": "Updated Task"}`
@@ -189,11 +195,13 @@ func TestTaskDeleteTask(t *testing.T) {
 
 	testUserID := uuid.New().String()
 	taskID := uuid.New().String()
+	userID := createUserID(testUserID)
+	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskID, "Task to Delete", testUserID)
+	existingTask := task.NewTask(taskDomainID, "Task to Delete", userID)
 
-	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, taskID).Return(existingTask, nil)
-	mockRepo.EXPECT().Delete(gomock.Any(), testUserID, taskID).Return(nil)
+	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
+	mockRepo.EXPECT().Delete(gomock.Any(), userID, taskDomainID).Return(nil)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/tasks/"+taskID, nil)
@@ -251,8 +259,9 @@ func TestValidationErrors(t *testing.T) {
 		{"title too long", `{"title": "` + strings.Repeat("a", 256) + `"}`, http.StatusBadRequest, func() {}},
 		{"valid title", `{"title": "Valid Task"}`, http.StatusCreated, func() {
 			taskID := uuid.New().String()
-			createdTask := task.NewTask(taskID, "Valid Task", testUserID)
-			mockRepo.EXPECT().Create(gomock.Any(), testUserID, "Valid Task").Return(createdTask, nil)
+			userID := createUserID(testUserID)
+			createdTask := task.NewTask(createTaskID(taskID), "Valid Task", userID)
+			mockRepo.EXPECT().Create(gomock.Any(), userID, "Valid Task").Return(createdTask, nil)
 		}},
 	}
 
@@ -288,6 +297,8 @@ func TestTaskNotFound(t *testing.T) {
 
 	testUserID := uuid.New().String()
 	nonExistentTaskID := uuid.New().String()
+	userID := createUserID(testUserID)
+	taskDomainID := createTaskID(nonExistentTaskID)
 
 	tests := []struct {
 		name      string
@@ -297,7 +308,7 @@ func TestTaskNotFound(t *testing.T) {
 		{
 			name: "get non-existent task",
 			setupMock: func() {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, nonExistentTaskID).Return(nil, task.ErrTaskNotFound)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(nil, task.ErrTaskNotFound)
 			},
 			operation: func() error {
 				e := echo.New()
@@ -316,7 +327,7 @@ func TestTaskNotFound(t *testing.T) {
 		{
 			name: "update non-existent task",
 			setupMock: func() {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, nonExistentTaskID).Return(nil, task.ErrTaskNotFound)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(nil, task.ErrTaskNotFound)
 			},
 			operation: func() error {
 				e := echo.New()
@@ -337,7 +348,7 @@ func TestTaskNotFound(t *testing.T) {
 		{
 			name: "delete non-existent task",
 			setupMock: func() {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, nonExistentTaskID).Return(nil, task.ErrTaskNotFound)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(nil, task.ErrTaskNotFound)
 			},
 			operation: func() error {
 				e := echo.New()
@@ -429,6 +440,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 	t.Parallel()
 
 	testUserID := uuid.New().String()
+	userID := createUserID(testUserID)
 
 	tests := []struct {
 		name               string
@@ -443,7 +455,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			name:      "database connection timeout on GetAllTasks",
 			operation: "GetAllTasks",
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), testUserID).Return(nil, context.DeadlineExceeded)
+				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return(nil, context.DeadlineExceeded)
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "timeout",
@@ -452,7 +464,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			name:      "database connection error on GetAllTasks",
 			operation: "GetAllTasks",
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), testUserID).Return(nil, fmt.Errorf("database connection failed"))
+				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return(nil, fmt.Errorf("database connection failed"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "database",
@@ -462,7 +474,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			operation:   "CreateTask",
 			requestBody: `{"title": "Duplicate Task"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "Duplicate Task").Return(nil, fmt.Errorf("UNIQUE constraint failed"))
+				mockRepo.EXPECT().Create(gomock.Any(), userID, "Duplicate Task").Return(nil, fmt.Errorf("UNIQUE constraint failed"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "constraint",
@@ -472,7 +484,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			operation:   "CreateTask",
 			requestBody: `{"title": "Transaction Failed"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "Transaction Failed").Return(nil, fmt.Errorf("transaction rolled back"))
+				mockRepo.EXPECT().Create(gomock.Any(), userID, "Transaction Failed").Return(nil, fmt.Errorf("transaction rolled back"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "transaction",
@@ -482,7 +494,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			operation: "GetTask",
 			taskID:    uuid.New().String(),
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(nil, fmt.Errorf("network I/O timeout"))
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, gomock.Any()).Return(nil, fmt.Errorf("network I/O timeout"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "network",
@@ -493,9 +505,9 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			taskID:      uuid.New().String(),
 			requestBody: `{"title": "Updated Task"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(uuid.New().String(), "Original Task", testUserID)
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(existingTask, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), testUserID, gomock.Any(), "Updated Task").Return(nil, fmt.Errorf("optimistic locking failed"))
+				existingTask := task.NewTask(createTaskID(uuid.New().String()), "Original Task", userID)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, gomock.Any()).Return(existingTask, nil)
+				mockRepo.EXPECT().Update(gomock.Any(), userID, gomock.Any(), "Updated Task").Return(nil, fmt.Errorf("optimistic locking failed"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "conflict",
@@ -505,9 +517,9 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			operation: "DeleteTask",
 			taskID:    uuid.New().String(),
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(uuid.New().String(), "Task to Delete", testUserID)
-				mockRepo.EXPECT().FindById(gomock.Any(), testUserID, gomock.Any()).Return(existingTask, nil)
-				mockRepo.EXPECT().Delete(gomock.Any(), testUserID, gomock.Any()).Return(fmt.Errorf("FOREIGN KEY constraint failed"))
+				existingTask := task.NewTask(createTaskID(uuid.New().String()), "Task to Delete", userID)
+				mockRepo.EXPECT().FindById(gomock.Any(), userID, gomock.Any()).Return(existingTask, nil)
+				mockRepo.EXPECT().Delete(gomock.Any(), userID, gomock.Any()).Return(fmt.Errorf("FOREIGN KEY constraint failed"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
 			expectedErrorType:  "constraint",
@@ -588,6 +600,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 
 	handler, mockRepo := setupTestServer(ctrl)
 	testUserID := uuid.New().String()
+	userID := createUserID(testUserID)
 
 	tests := []struct {
 		name               string
@@ -601,8 +614,8 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			expectedStatusCode: http.StatusCreated,
 			setupMock: func() {
 				taskID := uuid.New().String()
-				createdTask := task.NewTask(taskID, "タスク 🚀 Test ñoño ënd", testUserID)
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, "タスク 🚀 Test ñoño ënd").Return(createdTask, nil)
+				createdTask := task.NewTask(createTaskID(taskID), "タスク 🚀 Test ñoño ënd", userID)
+				mockRepo.EXPECT().Create(gomock.Any(), userID, "タスク 🚀 Test ñoño ënd").Return(createdTask, nil)
 			},
 		},
 		{
@@ -612,8 +625,8 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := "Task with <script>alert('xss')</script> & special chars"
-				createdTask := task.NewTask(taskID, title, testUserID)
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				mockRepo.EXPECT().Create(gomock.Any(), userID, title).Return(createdTask, nil)
 			},
 		},
 		{
@@ -623,8 +636,8 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := strings.Repeat("a", 255)
-				createdTask := task.NewTask(taskID, title, testUserID)
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				mockRepo.EXPECT().Create(gomock.Any(), userID, title).Return(createdTask, nil)
 			},
 		},
 		{
@@ -634,8 +647,8 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := "Task with\nnewlines\tand\ttabs"
-				createdTask := task.NewTask(taskID, title, testUserID)
-				mockRepo.EXPECT().Create(gomock.Any(), testUserID, title).Return(createdTask, nil)
+				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				mockRepo.EXPECT().Create(gomock.Any(), userID, title).Return(createdTask, nil)
 			},
 		},
 	}
@@ -822,13 +835,15 @@ func TestTaskConcurrentOperations(t *testing.T) {
 	handler, mockRepo := setupTestServer(ctrl)
 	testUserID := uuid.New().String()
 	testTaskID := uuid.New().String()
+	userID := createUserID(testUserID)
+	taskDomainID := createTaskID(testTaskID)
 
-	existingTask := task.NewTask(testTaskID, "Original Task", testUserID)
+	existingTask := task.NewTask(taskDomainID, "Original Task", userID)
 
 	// First call succeeds
-	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(existingTask, nil).Times(1)
+	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil).Times(1)
 	// Second call fails due to concurrent modification
-	mockRepo.EXPECT().FindById(gomock.Any(), testUserID, testTaskID).Return(nil, fmt.Errorf("record modified by another transaction")).Times(1)
+	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(nil, fmt.Errorf("record modified by another transaction")).Times(1)
 
 	e := echo.New()
 
