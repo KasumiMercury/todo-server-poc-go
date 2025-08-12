@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	task "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	user "github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,7 +43,7 @@ func (m *MockTaskRepository) EXPECT() *MockTaskRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockTaskRepository) Create(ctx context.Context, userID, title string) (*task.Task, error) {
+func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, userID, title)
 	ret0, _ := ret[0].(*task.Task)
@@ -57,7 +58,7 @@ func (mr *MockTaskRepositoryMockRecorder) Create(ctx, userID, title any) *gomock
 }
 
 // Delete mocks base method.
-func (m *MockTaskRepository) Delete(ctx context.Context, userID, id string) error {
+func (m *MockTaskRepository) Delete(ctx context.Context, userID user.UserID, id task.TaskID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, userID, id)
 	ret0, _ := ret[0].(error)
@@ -71,7 +72,7 @@ func (mr *MockTaskRepositoryMockRecorder) Delete(ctx, userID, id any) *gomock.Ca
 }
 
 // FindAllByUserID mocks base method.
-func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
+func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindAllByUserID", ctx, userID)
 	ret0, _ := ret[0].([]*task.Task)
@@ -86,7 +87,7 @@ func (mr *MockTaskRepositoryMockRecorder) FindAllByUserID(ctx, userID any) *gomo
 }
 
 // FindById mocks base method.
-func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
+func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindById", ctx, userID, id)
 	ret0, _ := ret[0].(*task.Task)
@@ -101,7 +102,7 @@ func (mr *MockTaskRepositoryMockRecorder) FindById(ctx, userID, id any) *gomock.
 }
 
 // Update mocks base method.
-func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
+func (m *MockTaskRepository) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, userID, id, title)
 	ret0, _ := ret[0].(*task.Task)

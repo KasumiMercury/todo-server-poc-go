@@ -19,6 +19,7 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/repository"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,7 +99,8 @@ func setupTestServer(t *testing.T) *TestServer {
 	taskGroup.PUT("/:taskId", wrapper.TaskUpdateTask)
 	taskGroup.DELETE("/:taskId", wrapper.TaskDeleteTask)
 
-	jwtToken := generateTestJWTToken("test-user-e2e", cfg.Auth.JWTSecret)
+	userID := uuid.New().String()
+	jwtToken := generateTestJWTToken(userID, cfg.Auth.JWTSecret)
 
 	return &TestServer{
 		server:   router,
@@ -473,7 +475,7 @@ func TestE2E_TaskNotFound(t *testing.T) {
 	testServer := setupTestServer(t)
 	defer testServer.cleanup()
 
-	nonexistentTaskID := "nonexistent-task-id"
+	nonexistentTaskID := uuid.New().String()
 
 	tests := []struct {
 		name     string

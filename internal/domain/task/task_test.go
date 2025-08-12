@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,14 +13,14 @@ func TestNewTaskWithValidation(t *testing.T) {
 	t.Parallel()
 
 	// Generate UUIDs for consistent test data
-	testID := uuid.New().String()
-	testUserID := uuid.New().String()
+	testID := GenerateTaskID()
+	testUserID := user.GenerateUserID()
 
 	tests := []struct {
 		name          string
-		id            string
+		id            TaskID
 		title         string
-		userID        string
+		userID        user.UserID
 		expectedError error
 	}{
 		{
@@ -94,8 +94,8 @@ func TestTaskUpdateTitle(t *testing.T) {
 	t.Parallel()
 
 	// Generate UUIDs for consistent test data
-	testID := uuid.New().String()
-	testUserID := uuid.New().String()
+	testID := GenerateTaskID()
+	testUserID := user.GenerateUserID()
 
 	tests := []struct {
 		name          string
@@ -243,9 +243,9 @@ func TestTaskGetters(t *testing.T) {
 	t.Parallel()
 
 	// Arrange
-	expectedID := uuid.New().String()
+	expectedID := GenerateTaskID()
 	expectedTitle := "Test Task Title"
-	expectedUserID := uuid.New().String()
+	expectedUserID := user.GenerateUserID()
 
 	task := NewTask(expectedID, expectedTitle, expectedUserID)
 

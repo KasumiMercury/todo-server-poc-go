@@ -13,6 +13,7 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/config"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	infraAuth "github.com/KasumiMercury/todo-server-poc-go/internal/infra/auth"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
@@ -43,17 +44,20 @@ func (m *MockHealthService) CheckHealth(ctx context.Context) service.HealthStatu
 	}
 }
 
-func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
+func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
 	// Return mock tasks for the specific user
-	if userID == "test-user" {
-		task1 := task.NewTask("1", "Test Task 1", userID)
-		task2 := task.NewTask("2", "Test Task 2", userID)
+	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" { // test-user UUID
+		taskID1, _ := task.NewTaskID("3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
+		taskID2, _ := task.NewTaskID("4f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
+		task1 := task.NewTask(taskID1, "Test Task 1", userID)
+		task2 := task.NewTask(taskID2, "Test Task 2", userID)
 
 		return []*task.Task{task1, task2}, nil
 	}
 
-	if userID == "other-user" {
-		task3 := task.NewTask("3", "Other User Task", userID)
+	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" { // other-user UUID
+		taskID3, _ := task.NewTaskID("5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
+		task3 := task.NewTask(taskID3, "Other User Task", userID)
 
 		return []*task.Task{task3}, nil
 	}
@@ -61,36 +65,38 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID string)
 	return []*task.Task{}, nil
 }
 
-func (m *MockTaskRepository) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
-	if userID == "test-user" && id == "1" {
-		return task.NewTask("1", "Test Task 1", userID), nil
+func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
+	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
+		return task.NewTask(id, "Test Task 1", userID), nil
 	}
 
-	if userID == "other-user" && id == "3" {
-		return task.NewTask("3", "Other User Task", userID), nil
+	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" && id.String() == "5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
+		return task.NewTask(id, "Other User Task", userID), nil
 	}
 
 	return nil, task.ErrTaskNotFound
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, userID, title string) (*task.Task, error) {
-	return task.NewTask("new-id", title, userID), nil
+func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
+	newTaskID := task.GenerateTaskID()
+
+	return task.NewTask(newTaskID, title, userID), nil
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
-	if userID == "test-user" && id == "1" {
+func (m *MockTaskRepository) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
+	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
 		return task.NewTask(id, title, userID), nil
 	}
 
 	return nil, task.ErrTaskNotFound
 }
 
-func (m *MockTaskRepository) Delete(ctx context.Context, userID, id string) error {
+func (m *MockTaskRepository) Delete(ctx context.Context, userID user.UserID, id task.TaskID) error {
 	return nil
 }
 
 func generateTestJWT() string {
-	return generateTestJWTForUser("test-user")
+	return generateTestJWTForUser("550e8400-e29b-41d4-a716-446655440000") // test-user UUID
 }
 
 func generateTestJWTForUser(userID string) string {
@@ -235,8 +241,8 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 		}
 	})
 
-	t.Run("GET /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
-		req, err := http.NewRequest("GET", "/tasks/1", nil)
+	t.Run("GET /tasks/{taskId} with valid JWT token should return 200", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", nil)
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -251,7 +257,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 		}
 	})
 
-	t.Run("PUT /tasks/1 with valid JWT token should return 200", func(t *testing.T) {
+	t.Run("PUT /tasks/{taskId} with valid JWT token should return 200", func(t *testing.T) {
 		updateBody := map[string]string{"title": "Updated Test Task"}
 
 		jsonData, err := json.Marshal(updateBody)
@@ -259,7 +265,7 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 			t.Fatalf("Failed to marshal JSON: %v", err)
 		}
 
-		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest("PUT", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", bytes.NewBuffer(jsonData))
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -275,8 +281,8 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 		}
 	})
 
-	t.Run("DELETE /tasks/1 with valid JWT token should return 204", func(t *testing.T) {
-		req, err := http.NewRequest("DELETE", "/tasks/1", nil)
+	t.Run("DELETE /tasks/{taskId} with valid JWT token should return 204", func(t *testing.T) {
+		req, err := http.NewRequest("DELETE", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", nil)
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -294,8 +300,8 @@ func TestJWTAuthenticationAuthorized(t *testing.T) {
 
 func TestUserTaskSeparation(t *testing.T) {
 	router := setupTestRouter()
-	testUserJWT := generateTestJWTForUser("test-user")
-	otherUserJWT := generateTestJWTForUser("other-user")
+	testUserJWT := generateTestJWTForUser("550e8400-e29b-41d4-a716-446655440000")  // test-user UUID
+	otherUserJWT := generateTestJWTForUser("660e8400-e29b-41d4-a716-446655440000") // other-user UUID
 
 	t.Run("Users should only see their own tasks", func(t *testing.T) {
 		// Test user should see 2 tasks
@@ -348,8 +354,8 @@ func TestUserTaskSeparation(t *testing.T) {
 	})
 
 	t.Run("Users should not access other users' tasks by ID", func(t *testing.T) {
-		// Test user tries to access other user's task (task ID 3)
-		req, err := http.NewRequest("GET", "/tasks/3", nil)
+		// Test user tries to access other user's task (task ID 5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f)
+		req, err := http.NewRequest("GET", "/tasks/5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", nil)
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -363,8 +369,8 @@ func TestUserTaskSeparation(t *testing.T) {
 			t.Errorf("Expected status %d when test-user tries to access other user's task, got %d", http.StatusNotFound, w.Code)
 		}
 
-		// Other user tries to access test user's task (task ID 1)
-		req, err = http.NewRequest("GET", "/tasks/1", nil)
+		// Other user tries to access test user's task (task ID 3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f)
+		req, err = http.NewRequest("GET", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", nil)
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -562,7 +568,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("PUT /tasks/1 with empty title should return 400", func(t *testing.T) {
+	t.Run("PUT /tasks/{taskId} with empty title should return 400", func(t *testing.T) {
 		updateBody := map[string]string{"title": ""}
 
 		jsonData, err := json.Marshal(updateBody)
@@ -570,7 +576,7 @@ func TestTaskTitleValidation(t *testing.T) {
 			t.Fatalf("Failed to marshal JSON: %v", err)
 		}
 
-		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest("PUT", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", bytes.NewBuffer(jsonData))
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -586,7 +592,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("PUT /tasks/1 with 256 character title should return 400", func(t *testing.T) {
+	t.Run("PUT /tasks/{taskId} with 256 character title should return 400", func(t *testing.T) {
 		longTitle := strings.Repeat("b", 256)
 		updateBody := map[string]string{"title": longTitle}
 
@@ -595,7 +601,7 @@ func TestTaskTitleValidation(t *testing.T) {
 			t.Fatalf("Failed to marshal JSON: %v", err)
 		}
 
-		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest("PUT", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", bytes.NewBuffer(jsonData))
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
@@ -611,7 +617,7 @@ func TestTaskTitleValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("PUT /tasks/1 with exactly 255 character title should return 200", func(t *testing.T) {
+	t.Run("PUT /tasks/{taskId} with exactly 255 character title should return 200", func(t *testing.T) {
 		longTitle := strings.Repeat("c", 255)
 		updateBody := map[string]string{"title": longTitle}
 
@@ -620,7 +626,7 @@ func TestTaskTitleValidation(t *testing.T) {
 			t.Fatalf("Failed to marshal JSON: %v", err)
 		}
 
-		req, err := http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonData))
+		req, err := http.NewRequest("PUT", "/tasks/3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f", bytes.NewBuffer(jsonData))
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}

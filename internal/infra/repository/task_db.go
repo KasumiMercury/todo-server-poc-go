@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"errors"
-	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 )
 
 // TaskModel represents the database model for tasks.
@@ -26,8 +28,18 @@ func (TaskModel) TableName() string {
 }
 
 // ToDomain converts a TaskModel to a domain Task entity.
-func (t TaskModel) ToDomain() *task.Task {
-	return task.NewTask(t.ID, t.Title, t.UserID)
+func (t TaskModel) ToDomain() (*task.Task, error) {
+	taskID, err := task.NewTaskID(t.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	userID, err := user.NewUserID(t.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return task.NewTask(taskID, t.Title, userID), nil
 }
 
 // TaskDB implements the TaskRepository interface using GORM for database operations.
@@ -40,16 +52,16 @@ func NewTaskDB(db *gorm.DB) *TaskDB {
 	return &TaskDB{db: db}
 }
 
-func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
-	if userID == "" {
-		panic("UserID must not be empty")
+func (t *TaskDB) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
+	if userID.IsEmpty() {
+		return nil, user.ErrUserIDEmpty
 	}
 
-	if id == "" {
-		panic("ID must not be empty")
+	if id.IsEmpty() {
+		return nil, task.ErrTaskIDEmpty
 	}
 
-	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).First(ctx)
+	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, task.ErrTaskNotFound
@@ -58,15 +70,15 @@ func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, e
 		return nil, err
 	}
 
-	return taskRecord.ToDomain(), nil
+	return taskRecord.ToDomain()
 }
 
-func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
-	if userID == "" {
-		panic("UserID must not be empty")
+func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
+	if userID.IsEmpty() {
+		return nil, user.ErrUserIDEmpty
 	}
 
-	taskRecords, err := gorm.G[TaskModel](t.db).Where("user_id = ?", userID).Find(ctx)
+	taskRecords, err := gorm.G[TaskModel](t.db).Where("user_id = ?", userID.String()).Find(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, task.ErrTaskNotFound
@@ -80,26 +92,31 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Ta
 	}
 
 	tasks := make([]*task.Task, len(taskRecords))
-	for i, taskModel := range taskRecords {
-		tasks[i] = taskModel.ToDomain()
+	for i, record := range taskRecords {
+		domainTask, err := record.ToDomain()
+		if err != nil {
+			return nil, err
+		}
+
+		tasks[i] = domainTask
 	}
 
 	return tasks, nil
 }
 
-func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, error) {
-	if userID == "" {
-		panic("UserID must not be empty")
+func (t *TaskDB) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
+	if userID.IsEmpty() {
+		return nil, user.ErrUserIDEmpty
 	}
 
 	if title == "" {
-		panic("Title must not be empty")
+		return nil, task.ErrTitleEmpty
 	}
 
 	taskModel := &TaskModel{
 		ID:        uuid.New().String(),
 		Title:     title,
-		UserID:    userID,
+		UserID:    userID.String(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -109,48 +126,48 @@ func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, 
 		return nil, err
 	}
 
-	return taskModel.ToDomain(), nil
+	return taskModel.ToDomain()
 }
 
-func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
-	if userID == "" {
-		panic("UserID must not be empty")
+func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID) error {
+	if userID.IsEmpty() {
+		return user.ErrUserIDEmpty
 	}
 
-	if id == "" {
-		panic("ID must not be empty")
+	if id.IsEmpty() {
+		return task.ErrTaskIDEmpty
 	}
 
-	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).Delete(ctx); err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).Delete(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (t *TaskDB) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
-	if userID == "" {
-		panic("UserID must not be empty")
+func (t *TaskDB) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
+	if userID.IsEmpty() {
+		return nil, user.ErrUserIDEmpty
 	}
 
-	if id == "" {
-		panic("ID must not be empty")
+	if id.IsEmpty() {
+		return nil, task.ErrTaskIDEmpty
 	}
 
 	if title == "" {
-		panic("Title must not be empty")
+		return nil, task.ErrTitleEmpty
 	}
 
 	taskModel := &TaskModel{ //nolint:exhaustruct
-		ID:        id,
+		ID:        id.String(),
 		Title:     title,
-		UserID:    userID,
+		UserID:    userID.String(),
 		UpdatedAt: time.Now(),
 	}
 
-	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).Updates(ctx, *taskModel); err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).Updates(ctx, *taskModel); err != nil {
 		return nil, err
 	}
 
-	return taskModel.ToDomain(), nil
+	return taskModel.ToDomain()
 }
