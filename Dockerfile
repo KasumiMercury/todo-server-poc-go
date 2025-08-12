@@ -21,7 +21,7 @@ WORKDIR /app
 
 RUN go install github.com/air-verse/air@latest
 
-CMD ["air", "-c", ".air.toml", "cmd/main.go"]
+CMD ["air", "-c", ".air.toml"]
 
 FROM gcr.io/distroless/static-debian12 AS runner
 
