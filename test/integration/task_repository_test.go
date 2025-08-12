@@ -99,7 +99,27 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			createdTask, err := taskRepo.Create(ctx, tt.userID, tt.title)
+			var (
+				createdTask *task.Task
+				err         error
+			)
+
+			// Handle validation errors based on test case
+
+			if tt.expectedError == task.ErrTitleEmpty || tt.expectedError == task.ErrTitleTooLong {
+				// For title validation errors, the error comes from domain validation
+				_, err = task.NewTaskWithValidation(task.GenerateTaskID(), tt.title, tt.userID)
+				createdTask = nil
+			} else {
+				// For valid cases or other errors, create domain model and call repository
+				taskEntity, validationErr := task.NewTaskWithValidation(task.GenerateTaskID(), tt.title, tt.userID)
+				if validationErr != nil {
+					err = validationErr
+					createdTask = nil
+				} else {
+					createdTask, err = taskRepo.Create(ctx, taskEntity)
+				}
+			}
 
 			// Assert
 			if tt.expectedError != nil {
@@ -134,7 +154,9 @@ func TestTaskDB_Integration_FindById(t *testing.T) {
 	// Create test task
 	testUserID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
-	createdTask, err := taskRepo.Create(ctx, testUserID, "Test Task")
+	taskEntity, err := task.NewTaskWithValidation(task.GenerateTaskID(), "Test Task", testUserID)
+	require.NoError(t, err)
+	createdTask, err := taskRepo.Create(ctx, taskEntity)
 	require.NoError(t, err)
 	require.NotNil(t, createdTask)
 
@@ -215,12 +237,18 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 	user2ID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
-	task1, err := taskRepo.Create(ctx, user1ID, "User 1 Task 1")
+	taskEntity1, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 1 Task 1", user1ID)
 	require.NoError(t, err)
-	task2, err := taskRepo.Create(ctx, user1ID, "User 1 Task 2")
+	task1, err := taskRepo.Create(ctx, taskEntity1)
+	require.NoError(t, err)
+	taskEntity2, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 1 Task 2", user1ID)
+	require.NoError(t, err)
+	task2, err := taskRepo.Create(ctx, taskEntity2)
 	require.NoError(t, err)
 
-	task3, err := taskRepo.Create(ctx, user2ID, "User 2 Task 1")
+	taskEntity3, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 2 Task 1", user2ID)
+	require.NoError(t, err)
+	task3, err := taskRepo.Create(ctx, taskEntity3)
 	require.NoError(t, err)
 
 	noTasksUserID, err := user.NewUserID(uuid.New().String())
@@ -267,8 +295,8 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 				assert.Len(t, tasks, tt.expectedTasks)
 
 				// Verify all tasks belong to the correct user
-				for _, task := range tasks {
-					assert.Equal(t, tt.userID, task.UserID())
+				for _, item := range tasks {
+					assert.Equal(t, tt.userID, item.UserID())
 				}
 			}
 		})

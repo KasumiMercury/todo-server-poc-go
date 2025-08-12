@@ -1,10 +1,9 @@
 package handler
 
 import (
-	"github.com/labstack/echo/v4"
-
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
+	"github.com/labstack/echo/v4"
 )
 
 // APIServer handles HTTP requests for all API operations.

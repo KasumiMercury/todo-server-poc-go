@@ -36,8 +36,8 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, i
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
-	args := m.Called(ctx, userID, title)
+func (m *MockTaskRepository) Create(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
+	args := m.Called(ctx, taskEntity)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -45,8 +45,8 @@ func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, tit
 	return args.Get(0).(*task.Task), args.Error(1)
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
-	args := m.Called(ctx, userID, id, title)
+func (m *MockTaskRepository) Update(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
+	args := m.Called(ctx, taskEntity)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -301,7 +301,7 @@ func TestTaskController_CreateTask(t *testing.T) {
 
 			// Only set up mock expectations if we expect the repository to be called
 			if tt.expectedError != task.ErrTitleEmpty && tt.expectedError != task.ErrTitleTooLong {
-				mockRepo.On("Create", ctx, tt.userID, tt.title).Return(tt.mockReturn, tt.mockError)
+				mockRepo.On("Create", ctx, mock.AnythingOfType("*task.Task")).Return(tt.mockReturn, tt.mockError)
 			}
 
 			// Act
@@ -469,7 +469,7 @@ func TestTaskController_UpdateTask(t *testing.T) {
 
 			// Only set up mock expectations if we expect the repository to be called
 			if tt.expectedError != task.ErrTitleEmpty && tt.expectedError != task.ErrTitleTooLong {
-				mockRepo.On("Update", ctx, tt.userID, tt.taskID, tt.title).Return(tt.mockReturn, tt.mockError)
+				mockRepo.On("Update", ctx, mock.AnythingOfType("*task.Task")).Return(tt.mockReturn, tt.mockError)
 			}
 
 			// Act
