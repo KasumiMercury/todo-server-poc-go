@@ -2,13 +2,15 @@ package task
 
 import (
 	"context"
+
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 )
 
 // TaskRepository defines the interface for task data persistence operations.
 type TaskRepository interface {
-	FindById(ctx context.Context, userID, id string) (*Task, error)
-	FindAllByUserID(ctx context.Context, userID string) ([]*Task, error)
-	Create(ctx context.Context, userID, title string) (*Task, error)
-	Delete(ctx context.Context, userID, id string) error
-	Update(ctx context.Context, userID, id, title string) (*Task, error)
+	FindById(ctx context.Context, userID user.UserID, id TaskID) (*Task, error)
+	FindAllByUserID(ctx context.Context, userID user.UserID) ([]*Task, error)
+	Create(ctx context.Context, userID user.UserID, title string) (*Task, error)
+	Delete(ctx context.Context, userID user.UserID, id TaskID) error
+	Update(ctx context.Context, userID user.UserID, id TaskID, title string) (*Task, error)
 }

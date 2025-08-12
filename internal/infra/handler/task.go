@@ -8,6 +8,7 @@ import (
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	taskDomain "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
+	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	taskHandler "github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/generated"
 )
 
@@ -25,7 +26,12 @@ func NewTaskHandler(ctr controller.Task) *TaskHandler {
 
 // isDomainValidationError checks if the error is a domain validation error
 func isDomainValidationError(err error) bool {
-	return errors.Is(err, taskDomain.ErrTitleEmpty) || errors.Is(err, taskDomain.ErrTitleTooLong)
+	return errors.Is(err, taskDomain.ErrTitleEmpty) ||
+		errors.Is(err, taskDomain.ErrTitleTooLong) ||
+		errors.Is(err, user.ErrUserIDEmpty) ||
+		errors.Is(err, taskDomain.ErrTaskIDEmpty) ||
+		errors.Is(err, taskDomain.ErrInvalidTaskIDFormat) ||
+		errors.Is(err, user.ErrInvalidUserIDFormat)
 }
 
 // extractUserID extracts user ID from JWT context
@@ -47,7 +53,14 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
-	tasks, err := t.controller.GetAllTasks(c.Request().Context(), userID)
+	// Convert string userID to domain UserID
+	domainUserID, err := user.NewUserID(userID)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
+	}
+
+	tasks, err := t.controller.GetAllTasks(c.Request().Context(), domainUserID)
 	if err != nil {
 		details := err.Error()
 
@@ -58,7 +71,7 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 
 	for _, task := range tasks {
 		res = append(res, taskHandler.Task{
-			Id:    task.ID(),
+			Id:    task.ID().String(),
 			Title: task.Title(),
 		})
 	}
@@ -89,7 +102,14 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.CreateTask(c.Request().Context(), userID, req.Title)
+	// Convert string userID to domain UserID
+	domainUserID, err := user.NewUserID(userID)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
+	}
+
+	task, err := t.controller.CreateTask(c.Request().Context(), domainUserID, req.Title)
 	if err != nil {
 		details := err.Error()
 		if isDomainValidationError(err) {
@@ -100,7 +120,7 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID(),
+		Id:    task.ID().String(),
 		Title: task.Title(),
 	}
 
@@ -122,8 +142,22 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
+	// Convert string userID to domain UserID
+	domainUserID, err := user.NewUserID(userID)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
+	}
+
+	// Convert string taskId to domain TaskID
+	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
+	}
+
 	// Check if task exists before deletion
-	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
+	task, err := t.controller.GetTaskById(c.Request().Context(), domainUserID, domainTaskID)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
 			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
@@ -138,7 +172,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
 	}
 
-	err = t.controller.DeleteTask(c.Request().Context(), userID, taskId)
+	err = t.controller.DeleteTask(c.Request().Context(), domainUserID, domainTaskID)
 	if err != nil {
 		details := err.Error()
 
@@ -163,7 +197,21 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
+	// Convert string userID to domain UserID
+	domainUserID, err := user.NewUserID(userID)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
+	}
+
+	// Convert string taskId to domain TaskID
+	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
+	}
+
+	task, err := t.controller.GetTaskById(c.Request().Context(), domainUserID, domainTaskID)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
 			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
@@ -179,7 +227,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID(),
+		Id:    task.ID().String(),
 		Title: task.Title(),
 	}
 
@@ -209,7 +257,21 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	task, err := t.controller.GetTaskById(c.Request().Context(), userID, taskId)
+	// Convert string userID to domain UserID
+	domainUserID, err := user.NewUserID(userID)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
+	}
+
+	// Convert string taskId to domain TaskID
+	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	if err != nil {
+		details := err.Error()
+		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
+	}
+
+	task, err := t.controller.GetTaskById(c.Request().Context(), domainUserID, domainTaskID)
 	if err != nil {
 		if errors.Is(err, taskDomain.ErrTaskNotFound) {
 			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
@@ -229,7 +291,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		title = *req.Title
 	}
 
-	task, err = t.controller.UpdateTask(c.Request().Context(), userID, taskId, title)
+	task, err = t.controller.UpdateTask(c.Request().Context(), domainUserID, domainTaskID, title)
 	if err != nil {
 		details := err.Error()
 		if isDomainValidationError(err) {
@@ -240,7 +302,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID(),
+		Id:    task.ID().String(),
 		Title: task.Title(),
 	}
 
