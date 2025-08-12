@@ -104,12 +104,10 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*ta
 }
 
 func (t *TaskDB) Create(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
-	taskModel := &TaskModel{
-		ID:        taskEntity.ID().String(),
-		Title:     taskEntity.Title(),
-		UserID:    taskEntity.UserID().String(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	taskModel := &TaskModel{ //nolint:exhaustruct
+		ID:     taskEntity.ID().String(),
+		Title:  taskEntity.Title(),
+		UserID: taskEntity.UserID().String(),
 	}
 
 	result := gorm.WithResult()
@@ -138,10 +136,9 @@ func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID)
 
 func (t *TaskDB) Update(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
 	taskModel := &TaskModel{ //nolint:exhaustruct
-		ID:        taskEntity.ID().String(),
-		Title:     taskEntity.Title(),
-		UserID:    taskEntity.UserID().String(),
-		UpdatedAt: time.Now(),
+		ID:     taskEntity.ID().String(),
+		Title:  taskEntity.Title(),
+		UserID: taskEntity.UserID().String(),
 	}
 
 	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", taskEntity.ID().String(), taskEntity.UserID().String()).Updates(ctx, *taskModel); err != nil {
