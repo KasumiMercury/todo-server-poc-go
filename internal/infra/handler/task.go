@@ -160,22 +160,6 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
 	}
 
-	// Check if task exists before deletion
-	task, err := t.controller.GetTaskById(c.Request().Context(), domainUserID, domainTaskID)
-	if err != nil {
-		if errors.Is(err, taskDomain.ErrTaskNotFound) {
-			return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
-		}
-
-		details := err.Error()
-
-		return c.JSON(http.StatusInternalServerError, NewInternalServerError("Internal server error", &details))
-	}
-
-	if task == nil {
-		return c.JSON(http.StatusNotFound, NewNotFoundError("Task not found"))
-	}
-
 	err = t.controller.DeleteTask(c.Request().Context(), domainUserID, domainTaskID)
 	if err != nil {
 		details := err.Error()
