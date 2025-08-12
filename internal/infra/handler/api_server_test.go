@@ -304,7 +304,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				taskID := createTaskID(uuid.New().String())
 				createdTask := task.NewTask(taskID, "New Task", userID)
-				mockRepo.EXPECT().Create(gomock.Any(), userID, "New Task").Return(createdTask, nil)
+				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 			expectedStatusCode: http.StatusCreated,
 			expectedTitle:      "New Task",
@@ -514,7 +514,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 				existingTask := task.NewTask(taskID, "Original Task", userID)
 				updatedTask := task.NewTask(taskID, "Updated Task", userID)
 				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), userID, taskID, "Updated Task").Return(updatedTask, nil)
+				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(updatedTask, nil)
 			},
 			expectedStatusCode: http.StatusOK,
 			expectedTitle:      "Updated Task",

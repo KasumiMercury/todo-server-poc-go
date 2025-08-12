@@ -77,15 +77,13 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, i
 	return nil, task.ErrTaskNotFound
 }
 
-func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
-	newTaskID := task.GenerateTaskID()
-
-	return task.NewTask(newTaskID, title, userID), nil
+func (m *MockTaskRepository) Create(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
+	return taskEntity, nil
 }
 
-func (m *MockTaskRepository) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
-	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
-		return task.NewTask(id, title, userID), nil
+func (m *MockTaskRepository) Update(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
+	if taskEntity.UserID().String() == "550e8400-e29b-41d4-a716-446655440000" && taskEntity.ID().String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
+		return taskEntity, nil
 	}
 
 	return nil, task.ErrTaskNotFound
