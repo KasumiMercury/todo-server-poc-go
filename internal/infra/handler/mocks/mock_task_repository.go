@@ -43,18 +43,18 @@ func (m *MockTaskRepository) EXPECT() *MockTaskRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
+func (m *MockTaskRepository) Create(ctx context.Context, arg1 *task.Task) (*task.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, userID, title)
+	ret := m.ctrl.Call(m, "Create", ctx, arg1)
 	ret0, _ := ret[0].(*task.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockTaskRepositoryMockRecorder) Create(ctx, userID, title any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) Create(ctx, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTaskRepository)(nil).Create), ctx, userID, title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTaskRepository)(nil).Create), ctx, arg1)
 }
 
 // Delete mocks base method.
@@ -102,16 +102,16 @@ func (mr *MockTaskRepositoryMockRecorder) FindById(ctx, userID, id any) *gomock.
 }
 
 // Update mocks base method.
-func (m *MockTaskRepository) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
+func (m *MockTaskRepository) Update(ctx context.Context, arg1 *task.Task) (*task.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, userID, id, title)
+	ret := m.ctrl.Call(m, "Update", ctx, arg1)
 	ret0, _ := ret[0].(*task.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockTaskRepositoryMockRecorder) Update(ctx, userID, id, title any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) Update(ctx, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTaskRepository)(nil).Update), ctx, userID, id, title)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTaskRepository)(nil).Update), ctx, arg1)
 }
