@@ -295,8 +295,8 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 				assert.Len(t, tasks, tt.expectedTasks)
 
 				// Verify all tasks belong to the correct user
-				for _, task := range tasks {
-					assert.Equal(t, tt.userID, task.UserID())
+				for _, item := range tasks {
+					assert.Equal(t, tt.userID, item.UserID())
 				}
 			}
 		})

@@ -198,9 +198,6 @@ func TestTaskDeleteTask(t *testing.T) {
 	userID := createUserID(testUserID)
 	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskDomainID, "Task to Delete", userID)
-
-	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
 	mockRepo.EXPECT().Delete(gomock.Any(), userID, taskDomainID).Return(nil)
 
 	e := echo.New()
@@ -348,7 +345,7 @@ func TestTaskNotFound(t *testing.T) {
 		{
 			name: "delete non-existent task",
 			setupMock: func() {
-				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(nil, task.ErrTaskNotFound)
+				mockRepo.EXPECT().Delete(gomock.Any(), userID, taskDomainID).Return(nil)
 			},
 			operation: func() error {
 				e := echo.New()
@@ -359,7 +356,7 @@ func TestTaskNotFound(t *testing.T) {
 
 				err := handler.DeleteTask(c, nonExistentTaskID)
 				assert.NoError(t, err)
-				assert.Equal(t, http.StatusNotFound, rec.Code)
+				assert.Equal(t, http.StatusNoContent, rec.Code)
 
 				return nil
 			},
@@ -517,8 +514,6 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			operation: "DeleteTask",
 			taskID:    uuid.New().String(),
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(createTaskID(uuid.New().String()), "Task to Delete", userID)
-				mockRepo.EXPECT().FindById(gomock.Any(), userID, gomock.Any()).Return(existingTask, nil)
 				mockRepo.EXPECT().Delete(gomock.Any(), userID, gomock.Any()).Return(fmt.Errorf("FOREIGN KEY constraint failed"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,

@@ -499,11 +499,11 @@ func TestE2E_TaskNotFound(t *testing.T) {
 			expected: http.StatusNotFound,
 		},
 		{
-			name:     "DELETE nonexistent task should return 404",
+			name:     "DELETE nonexistent task should return 204",
 			method:   "DELETE",
 			path:     "/tasks/" + nonexistentTaskID,
 			body:     nil,
-			expected: http.StatusNotFound,
+			expected: http.StatusNoContent,
 		},
 	}
 

@@ -627,8 +627,6 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			userID: testUserID,
 			taskID: testTaskID,
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
-				existingTask := task.NewTask(taskID, "Task to Delete", userID)
-				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
 				mockRepo.EXPECT().Delete(gomock.Any(), userID, taskID).Return(nil)
 			},
 			expectedStatusCode: http.StatusNoContent,
@@ -638,9 +636,9 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			userID: testUserID,
 			taskID: testTaskID,
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
-				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(nil, task.ErrTaskNotFound)
+				mockRepo.EXPECT().Delete(gomock.Any(), userID, taskID).Return(nil)
 			},
-			expectedStatusCode: http.StatusNotFound,
+			expectedStatusCode: http.StatusNoContent,
 		},
 		{
 			name:   "missing user_id in context",
