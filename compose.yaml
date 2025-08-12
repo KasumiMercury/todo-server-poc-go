@@ -11,6 +11,8 @@ services:
       - "8081:8081"
     depends_on:
       - postgres
+    environment:
+      - JWT_SECRET=secret-key-for-testing
 
   postgres:
     image: postgres:17
