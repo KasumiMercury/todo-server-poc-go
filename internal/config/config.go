@@ -23,9 +23,8 @@ var (
 	ErrAuthMethodRequired     = errors.New("at least one authentication method must be configured: JWT_SECRET, JWKS_ENDPOINT_URL, or JWT_PRIVATE_KEY_FILE")
 	ErrPrivateKeyFileNotFound = errors.New("private key file does not exist")
 
-	ErrServiceNameRequired  = errors.New("service name is required")
-	ErrAllowOriginsRequired = errors.New("at least one allowed origin must be specified")
-	ErrAllowOriginEmpty     = errors.New("allowed origin is empty")
+	ErrServiceNameRequired = errors.New("service name is required")
+	ErrAllowOriginEmpty    = errors.New("allowed origin is empty")
 
 	ErrConfigValidation = errors.New("configuration validation failed")
 )
