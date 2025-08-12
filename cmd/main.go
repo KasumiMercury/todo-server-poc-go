@@ -20,7 +20,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal("Failed to load configuration:", err)
+	}
 
 	db, err := initDB(cfg.Database)
 	if err != nil {
