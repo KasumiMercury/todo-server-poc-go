@@ -79,6 +79,7 @@ func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, i
 
 func (m *MockTaskRepository) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
 	newTaskID := task.GenerateTaskID()
+
 	return task.NewTask(newTaskID, title, userID), nil
 }
 

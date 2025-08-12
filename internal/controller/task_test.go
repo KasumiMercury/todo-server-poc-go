@@ -223,6 +223,7 @@ func TestTaskController_GetAllTasks(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, len(tt.expectedTasks), len(result))
+
 				for i, expectedTask := range tt.expectedTasks {
 					assert.Equal(t, expectedTask.ID(), result[i].ID())
 					assert.Equal(t, expectedTask.Title(), result[i].Title())

@@ -97,6 +97,7 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*ta
 		if err != nil {
 			return nil, err
 		}
+
 		tasks[i] = domainTask
 	}
 

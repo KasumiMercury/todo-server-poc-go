@@ -57,6 +57,7 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
@@ -106,6 +107,7 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
@@ -146,6 +148,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
@@ -153,6 +156,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	domainTaskID, err := taskDomain.NewTaskID(taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
 	}
 
@@ -201,6 +205,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
@@ -208,6 +213,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	domainTaskID, err := taskDomain.NewTaskID(taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
 	}
 
@@ -261,6 +267,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
@@ -268,6 +275,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	domainTaskID, err := taskDomain.NewTaskID(taskId)
 	if err != nil {
 		details := err.Error()
+
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid task ID format", &details))
 	}
 

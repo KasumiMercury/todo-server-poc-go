@@ -28,6 +28,7 @@ func createTaskID(s string) task.TaskID {
 	if err != nil {
 		panic("failed to create task ID: " + err.Error())
 	}
+
 	return taskID
 }
 
@@ -36,6 +37,7 @@ func createUserID(s string) user.UserID {
 	if err != nil {
 		panic("failed to create user ID: " + err.Error())
 	}
+
 	return userID
 }
 
@@ -252,6 +254,7 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 			if tt.userID != "" {
 				domainUserID = createUserID(tt.userID)
 			}
+
 			tt.setupMock(mockRepo, domainUserID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
@@ -351,6 +354,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			if tt.userID != "" {
 				domainUserID = createUserID(tt.userID)
 			}
+
 			tt.setupMock(mockRepo, domainUserID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
@@ -441,14 +445,19 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			var domainUserID user.UserID
-			var domainTaskID task.TaskID
+			var (
+				domainUserID user.UserID
+				domainTaskID task.TaskID
+			)
+
 			if tt.userID != "" {
 				domainUserID = createUserID(tt.userID)
 			}
+
 			if tt.taskID != "" {
 				domainTaskID = createTaskID(tt.taskID)
 			}
+
 			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
@@ -554,14 +563,19 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			var domainUserID user.UserID
-			var domainTaskID task.TaskID
+			var (
+				domainUserID user.UserID
+				domainTaskID task.TaskID
+			)
+
 			if tt.userID != "" {
 				domainUserID = createUserID(tt.userID)
 			}
+
 			if tt.taskID != "" {
 				domainTaskID = createTaskID(tt.taskID)
 			}
+
 			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
@@ -651,14 +665,19 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			mockHealthService := mocks.NewMockHealthService(ctrl)
 			taskController := controller.NewTask(mockRepo)
 
-			var domainUserID user.UserID
-			var domainTaskID task.TaskID
+			var (
+				domainUserID user.UserID
+				domainTaskID task.TaskID
+			)
+
 			if tt.userID != "" {
 				domainUserID = createUserID(tt.userID)
 			}
+
 			if tt.taskID != "" {
 				domainTaskID = createTaskID(tt.taskID)
 			}
+
 			tt.setupMock(mockRepo, domainUserID, domainTaskID)
 
 			apiServer := NewAPIServer(*taskController, mockHealthService)
