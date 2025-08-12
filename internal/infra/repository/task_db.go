@@ -42,11 +42,11 @@ func NewTaskDB(db *gorm.DB) *TaskDB {
 
 func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, error) {
 	if userID == "" {
-		panic("UserID must not be empty")
+		return nil, task.ErrUserIDEmpty
 	}
 
 	if id == "" {
-		panic("ID must not be empty")
+		return nil, task.ErrTaskIDEmpty
 	}
 
 	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).First(ctx)
@@ -63,7 +63,7 @@ func (t *TaskDB) FindById(ctx context.Context, userID, id string) (*task.Task, e
 
 func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Task, error) {
 	if userID == "" {
-		panic("UserID must not be empty")
+		return nil, task.ErrUserIDEmpty
 	}
 
 	taskRecords, err := gorm.G[TaskModel](t.db).Where("user_id = ?", userID).Find(ctx)
@@ -89,11 +89,11 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID string) ([]*task.Ta
 
 func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, error) {
 	if userID == "" {
-		panic("UserID must not be empty")
+		return nil, task.ErrUserIDEmpty
 	}
 
 	if title == "" {
-		panic("Title must not be empty")
+		return nil, task.ErrTitleEmpty
 	}
 
 	taskModel := &TaskModel{
@@ -114,11 +114,11 @@ func (t *TaskDB) Create(ctx context.Context, userID, title string) (*task.Task, 
 
 func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
 	if userID == "" {
-		panic("UserID must not be empty")
+		return task.ErrUserIDEmpty
 	}
 
 	if id == "" {
-		panic("ID must not be empty")
+		return task.ErrTaskIDEmpty
 	}
 
 	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id, userID).Delete(ctx); err != nil {
@@ -130,15 +130,15 @@ func (t *TaskDB) Delete(ctx context.Context, userID, id string) error {
 
 func (t *TaskDB) Update(ctx context.Context, userID, id, title string) (*task.Task, error) {
 	if userID == "" {
-		panic("UserID must not be empty")
+		return nil, task.ErrUserIDEmpty
 	}
 
 	if id == "" {
-		panic("ID must not be empty")
+		return nil, task.ErrTaskIDEmpty
 	}
 
 	if title == "" {
-		panic("Title must not be empty")
+		return nil, task.ErrTitleEmpty
 	}
 
 	taskModel := &TaskModel{ //nolint:exhaustruct
