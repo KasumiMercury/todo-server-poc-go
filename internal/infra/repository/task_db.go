@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
@@ -104,19 +103,11 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*ta
 	return tasks, nil
 }
 
-func (t *TaskDB) Create(ctx context.Context, userID user.UserID, title string) (*task.Task, error) {
-	if userID.IsEmpty() {
-		return nil, user.ErrUserIDEmpty
-	}
-
-	if title == "" {
-		return nil, task.ErrTitleEmpty
-	}
-
+func (t *TaskDB) Create(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
 	taskModel := &TaskModel{
-		ID:        uuid.New().String(),
-		Title:     title,
-		UserID:    userID.String(),
+		ID:        taskEntity.ID().String(),
+		Title:     taskEntity.Title(),
+		UserID:    taskEntity.UserID().String(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -145,27 +136,15 @@ func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID)
 	return nil
 }
 
-func (t *TaskDB) Update(ctx context.Context, userID user.UserID, id task.TaskID, title string) (*task.Task, error) {
-	if userID.IsEmpty() {
-		return nil, user.ErrUserIDEmpty
-	}
-
-	if id.IsEmpty() {
-		return nil, task.ErrTaskIDEmpty
-	}
-
-	if title == "" {
-		return nil, task.ErrTitleEmpty
-	}
-
+func (t *TaskDB) Update(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
 	taskModel := &TaskModel{ //nolint:exhaustruct
-		ID:        id.String(),
-		Title:     title,
-		UserID:    userID.String(),
+		ID:        taskEntity.ID().String(),
+		Title:     taskEntity.Title(),
+		UserID:    taskEntity.UserID().String(),
 		UpdatedAt: time.Now(),
 	}
 
-	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).Updates(ctx, *taskModel); err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", taskEntity.ID().String(), taskEntity.UserID().String()).Updates(ctx, *taskModel); err != nil {
 		return nil, err
 	}
 

@@ -10,7 +10,7 @@ import (
 type TaskRepository interface {
 	FindById(ctx context.Context, userID user.UserID, id TaskID) (*Task, error)
 	FindAllByUserID(ctx context.Context, userID user.UserID) ([]*Task, error)
-	Create(ctx context.Context, userID user.UserID, title string) (*Task, error)
+	Create(ctx context.Context, task *Task) (*Task, error)
 	Delete(ctx context.Context, userID user.UserID, id TaskID) error
-	Update(ctx context.Context, userID user.UserID, id TaskID, title string) (*Task, error)
+	Update(ctx context.Context, task *Task) (*Task, error)
 }

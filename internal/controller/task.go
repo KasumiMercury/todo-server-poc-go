@@ -64,13 +64,12 @@ func (t *Task) CreateTask(ctx context.Context, userID user.UserID, title string)
 		return nil, user.ErrUserIDEmpty
 	}
 
-	// Validate title using domain validation
-	_, err := task.NewTaskWithValidation(task.GenerateTaskID(), title, userID)
+	taskEntity, err := task.NewTaskWithValidation(task.GenerateTaskID(), title, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	taskItem, err := t.taskRepo.Create(ctx, userID, title)
+	taskItem, err := t.taskRepo.Create(ctx, taskEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -107,13 +106,12 @@ func (t *Task) UpdateTask(ctx context.Context, userID user.UserID, id task.TaskI
 		return nil, task.ErrTaskIDEmpty
 	}
 
-	// Validate title using domain validation
-	_, err := task.NewTaskWithValidation(id, title, userID)
+	taskEntity, err := task.NewTaskWithValidation(id, title, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	taskItem, err := t.taskRepo.Update(ctx, userID, id, title)
+	taskItem, err := t.taskRepo.Update(ctx, taskEntity)
 	if err != nil {
 		return nil, err
 	}
