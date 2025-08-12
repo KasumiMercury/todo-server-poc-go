@@ -51,23 +51,3 @@ func (u UserID) String() string {
 func (u UserID) IsEmpty() bool {
 	return u.value == uuid.Nil
 }
-
-type User struct {
-	id       UserID
-	username string
-}
-
-func NewUser(id UserID, username string) *User {
-	return &User{
-		id:       id,
-		username: username,
-	}
-}
-
-func (u *User) ID() UserID {
-	return u.id
-}
-
-func (u *User) Username() string {
-	return u.username
-}
