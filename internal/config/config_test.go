@@ -131,8 +131,10 @@ func TestDatabaseConfig_Validate(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("DatabaseConfig.Validate() expected error, got nil")
+
 					return
 				}
+
 				if err.Error() != tt.errMsg {
 					t.Errorf("DatabaseConfig.Validate() error = %v, want %v", err.Error(), tt.errMsg)
 				}
@@ -221,8 +223,10 @@ func TestJWKsConfig_Validate(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("JWKsConfig.Validate() expected error, got nil")
+
 					return
 				}
+
 				if err.Error() != tt.errMsg {
 					t.Errorf("JWKsConfig.Validate() error = %v, want %v", err.Error(), tt.errMsg)
 				}
@@ -242,6 +246,7 @@ func TestAuthConfig_Validate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
+
 	tmpFile.Close()
 
 	tests := []struct {
@@ -344,8 +349,10 @@ func TestAuthConfig_Validate(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("AuthConfig.Validate() expected error, got nil")
+
 					return
 				}
+
 				if err.Error() != tt.errMsg {
 					t.Errorf("AuthConfig.Validate() error = %v, want %v", err.Error(), tt.errMsg)
 				}
@@ -364,6 +371,7 @@ func TestConfig_Validate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove(tmpFile.Name())
+
 	tmpFile.Close()
 
 	validDatabaseConfig := DatabaseConfig{
@@ -490,8 +498,10 @@ func TestConfig_Validate(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("Config.Validate() expected error, got nil")
+
 					return
 				}
+
 				if err.Error() != tt.errMsg {
 					t.Errorf("Config.Validate() error = %v, want %v", err.Error(), tt.errMsg)
 				}
@@ -638,6 +648,7 @@ func TestLoad(t *testing.T) {
 				if err == nil {
 					t.Errorf("Load() expected error, got nil")
 				}
+
 				if config != nil {
 					t.Errorf("Load() expected nil config on error, got %+v", config)
 				}
@@ -650,6 +661,7 @@ func TestLoad(t *testing.T) {
 				if err != nil {
 					t.Errorf("Load() unexpected error: %v", err)
 				}
+
 				if config == nil {
 					t.Errorf("Load() returned nil config")
 				}
@@ -657,9 +669,11 @@ func TestLoad(t *testing.T) {
 				if config.ServiceName == "" {
 					t.Errorf("Load() ServiceName is empty")
 				}
+
 				if len(config.AllowOrigins) == 0 {
 					t.Errorf("Load() AllowOrigins is empty")
 				}
+
 				if config.Database.Host == "" {
 					t.Errorf("Load() Database.Host is empty")
 				}
@@ -703,6 +717,7 @@ func TestGetEnv(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			originalValue := os.Getenv(tt.key)
+
 			defer func() {
 				if originalValue == "" {
 					os.Unsetenv(tt.key)
@@ -784,6 +799,7 @@ func TestGetIntEnv(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			originalValue := os.Getenv(tt.key)
+
 			defer func() {
 				if originalValue == "" {
 					os.Unsetenv(tt.key)

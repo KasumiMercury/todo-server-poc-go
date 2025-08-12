@@ -44,15 +44,19 @@ func (dc DatabaseConfig) Validate() error {
 	if dc.Host == "" {
 		return ErrDatabaseHostRequired
 	}
+
 	if dc.Port == "" {
 		return ErrDatabasePortRequired
 	}
+
 	if dc.User == "" {
 		return ErrDatabaseUserRequired
 	}
+
 	if dc.Password == "" {
 		return ErrDatabasePasswordRequired
 	}
+
 	if dc.Name == "" {
 		return ErrDatabaseNameRequired
 	}
@@ -76,12 +80,15 @@ func (jc JWKsConfig) Validate() error {
 	if jc.CacheDuration < 0 {
 		return ErrJWKsCacheDurationNegative
 	}
+
 	if jc.RefreshPadding < 0 {
 		return ErrJWKsRefreshPaddingNegative
 	}
+
 	if jc.RefreshPadding >= jc.CacheDuration && jc.CacheDuration > 0 {
 		return ErrJWKsRefreshPaddingTooLarge
 	}
+
 	return nil
 }
 
