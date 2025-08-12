@@ -99,10 +99,13 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			var createdTask *task.Task
-			var err error
+			var (
+				createdTask *task.Task
+				err         error
+			)
 
 			// Handle validation errors based on test case
+
 			if tt.expectedError == task.ErrTitleEmpty || tt.expectedError == task.ErrTitleTooLong {
 				// For title validation errors, the error comes from domain validation
 				_, err = task.NewTaskWithValidation(task.GenerateTaskID(), tt.title, tt.userID)
