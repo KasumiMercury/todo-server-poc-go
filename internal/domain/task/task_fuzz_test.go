@@ -133,6 +133,7 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, title string) {
 		taskID := GenerateTaskID()
+
 		userID, err := user.NewUserID("550e8400-e29b-41d4-a716-446655440000")
 		if err != nil {
 			t.Fatalf("Failed to create test user ID: %v", err)
@@ -157,6 +158,7 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 			if err != ErrTitleEmpty {
 				t.Errorf("Expected ErrTitleEmpty for empty title %q, got %v", title, err)
 			}
+
 			if task != nil {
 				t.Errorf("Expected nil task for invalid title %q, got %v", title, task)
 			}
@@ -164,6 +166,7 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 			if !errors.Is(err, ErrTitleTooLong) {
 				t.Errorf("Expected ErrTitleTooLong for title %q (runes: %d), got %v", title, runeCount, err)
 			}
+
 			if task != nil {
 				t.Errorf("Expected nil task for invalid title %q, got %v", title, task)
 			}
@@ -171,15 +174,18 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 			if err != nil {
 				t.Errorf("Expected no error for valid title %q (runes: %d), got %v", title, runeCount, err)
 			}
+
 			if task == nil {
 				t.Errorf("Expected non-nil task for valid title %q, got nil", title)
 			} else {
 				if task.ID() != taskID {
 					t.Errorf("Task ID mismatch: expected %v, got %v", taskID, task.ID())
 				}
+
 				if task.Title() != title {
 					t.Errorf("Task title mismatch: expected %q, got %q", title, task.Title())
 				}
+
 				if task.UserID() != userID {
 					t.Errorf("Task user ID mismatch: expected %v, got %v", userID, task.UserID())
 				}
