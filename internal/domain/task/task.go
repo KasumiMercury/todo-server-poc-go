@@ -2,6 +2,7 @@ package task
 
 import (
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
@@ -77,9 +78,25 @@ func NewTaskWithoutValidation(id TaskID, title string, userID user.UserID) *Task
 	}
 }
 
+// trimSpaceAndZeroWidth removes leading/trailing spaces and zero-width characters
+func trimSpaceAndZeroWidth(s string) string {
+	// First trim standard spaces
+	s = strings.TrimSpace(s)
+
+	// Remove zero-width characters from both ends
+	return strings.TrimFunc(s, func(r rune) bool {
+		return unicode.IsSpace(r) ||
+			r == '\u200B' || // Zero-width space
+			r == '\u200C' || // Zero-width non-joiner
+			r == '\u200D' || // Zero-width joiner
+			r == '\u200E' || // Left-to-right mark
+			r == '\u200F' || // Right-to-left mark
+			r == '\uFEFF' // Zero-width no-break space (BOM)
+	})
+}
+
 func validateTitle(title string) error {
-	title = strings.TrimSpace(title)
-	if title == "" {
+	if trimSpaceAndZeroWidth(title) == "" {
 		return ErrTitleEmpty
 	}
 
