@@ -42,8 +42,8 @@ func TestTaskGetAllTasks(t *testing.T) {
 	testUserID := uuid.New().String()
 	userID := createUserID(testUserID)
 
-	task1 := task.NewTask(createTaskID(uuid.New().String()), "Task 1", userID)
-	task2 := task.NewTask(createTaskID(uuid.New().String()), "Task 2", userID)
+	task1 := task.NewTaskWithoutValidation(createTaskID(uuid.New().String()), "Task 1", userID)
+	task2 := task.NewTaskWithoutValidation(createTaskID(uuid.New().String()), "Task 2", userID)
 	mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return([]*task.Task{task1, task2}, nil)
 
 	e := echo.New()
@@ -78,7 +78,7 @@ func TestTaskCreateTask(t *testing.T) {
 	taskID := uuid.New().String()
 	userID := createUserID(testUserID)
 
-	createdTask := task.NewTask(createTaskID(taskID), "New Task", userID)
+	createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), "New Task", userID)
 	mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 
 	e := echo.New()
@@ -118,7 +118,7 @@ func TestTaskGetTask(t *testing.T) {
 	userID := createUserID(testUserID)
 	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskDomainID, "Test Task", userID)
+	existingTask := task.NewTaskWithoutValidation(taskDomainID, "Test Task", userID)
 	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
 
 	e := echo.New()
@@ -155,8 +155,8 @@ func TestTaskUpdateTask(t *testing.T) {
 	userID := createUserID(testUserID)
 	taskDomainID := createTaskID(taskID)
 
-	existingTask := task.NewTask(taskDomainID, "Original Task", userID)
-	updatedTask := task.NewTask(taskDomainID, "Updated Task", userID)
+	existingTask := task.NewTaskWithoutValidation(taskDomainID, "Original Task", userID)
+	updatedTask := task.NewTaskWithoutValidation(taskDomainID, "Updated Task", userID)
 
 	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil)
 	mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(updatedTask, nil)
@@ -257,7 +257,7 @@ func TestValidationErrors(t *testing.T) {
 		{"valid title", `{"title": "Valid Task"}`, http.StatusCreated, func() {
 			taskID := uuid.New().String()
 			userID := createUserID(testUserID)
-			createdTask := task.NewTask(createTaskID(taskID), "Valid Task", userID)
+			createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), "Valid Task", userID)
 			mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 		}},
 	}
@@ -502,7 +502,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			taskID:      uuid.New().String(),
 			requestBody: `{"title": "Updated Task"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository) {
-				existingTask := task.NewTask(createTaskID(uuid.New().String()), "Original Task", userID)
+				existingTask := task.NewTaskWithoutValidation(createTaskID(uuid.New().String()), "Original Task", userID)
 				mockRepo.EXPECT().FindById(gomock.Any(), userID, gomock.Any()).Return(existingTask, nil)
 				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("optimistic locking failed"))
 			},
@@ -609,7 +609,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			expectedStatusCode: http.StatusCreated,
 			setupMock: func() {
 				taskID := uuid.New().String()
-				createdTask := task.NewTask(createTaskID(taskID), "タスク 🚀 Test ñoño ënd", userID)
+				createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), "タスク 🚀 Test ñoño ënd", userID)
 				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 		},
@@ -620,7 +620,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := "Task with <script>alert('xss')</script> & special chars"
-				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), title, userID)
 				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 		},
@@ -631,7 +631,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := strings.Repeat("a", 255)
-				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), title, userID)
 				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 		},
@@ -642,7 +642,7 @@ func TestTaskEdgeCaseValidation(t *testing.T) {
 			setupMock: func() {
 				taskID := uuid.New().String()
 				title := "Task with\nnewlines\tand\ttabs"
-				createdTask := task.NewTask(createTaskID(taskID), title, userID)
+				createdTask := task.NewTaskWithoutValidation(createTaskID(taskID), title, userID)
 				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 		},
@@ -833,7 +833,7 @@ func TestTaskConcurrentOperations(t *testing.T) {
 	userID := createUserID(testUserID)
 	taskDomainID := createTaskID(testTaskID)
 
-	existingTask := task.NewTask(taskDomainID, "Original Task", userID)
+	existingTask := task.NewTaskWithoutValidation(taskDomainID, "Original Task", userID)
 
 	// First call succeeds
 	mockRepo.EXPECT().FindById(gomock.Any(), userID, taskDomainID).Return(existingTask, nil).Times(1)

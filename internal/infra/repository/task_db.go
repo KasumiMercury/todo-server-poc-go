@@ -38,7 +38,7 @@ func (t TaskModel) ToDomain() (*task.Task, error) {
 		return nil, err
 	}
 
-	return task.NewTask(taskID, t.Title, userID), nil
+	return task.NewTaskWithoutValidation(taskID, t.Title, userID), nil
 }
 
 // TaskDB implements the TaskRepository interface using GORM for database operations.

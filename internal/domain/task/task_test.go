@@ -72,7 +72,7 @@ func TestNewTaskWithValidation(t *testing.T) {
 			t.Parallel()
 
 			// Act
-			task, err := NewTaskWithValidation(tt.id, tt.title, tt.userID)
+			task, err := NewTask(tt.id, tt.title, tt.userID)
 
 			// Assert
 			if tt.expectedError != nil {
@@ -153,7 +153,7 @@ func TestTaskUpdateTitle(t *testing.T) {
 			t.Parallel()
 
 			// Arrange
-			task := NewTask(testID, tt.initialTitle, testUserID)
+			task := NewTaskWithoutValidation(testID, tt.initialTitle, testUserID)
 
 			// Act
 			err := task.UpdateTitle(tt.newTitle)
@@ -247,7 +247,7 @@ func TestTaskGetters(t *testing.T) {
 	expectedTitle := "Test Task Title"
 	expectedUserID := user.GenerateUserID()
 
-	task := NewTask(expectedID, expectedTitle, expectedUserID)
+	task := NewTaskWithoutValidation(expectedID, expectedTitle, expectedUserID)
 
 	// Act & Assert
 	assert.Equal(t, expectedID, task.ID())

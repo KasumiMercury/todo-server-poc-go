@@ -211,8 +211,8 @@ func TestAPIServer_TaskGetAllTasks(t *testing.T) {
 			name:   "successful retrieval of tasks",
 			userID: uuid.New().String(),
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
-				task1 := task.NewTask(createTaskID(uuid.New().String()), "Task 1", userID)
-				task2 := task.NewTask(createTaskID(uuid.New().String()), "Task 2", userID)
+				task1 := task.NewTaskWithoutValidation(createTaskID(uuid.New().String()), "Task 1", userID)
+				task2 := task.NewTaskWithoutValidation(createTaskID(uuid.New().String()), "Task 2", userID)
 				mockRepo.EXPECT().FindAllByUserID(gomock.Any(), userID).Return([]*task.Task{task1, task2}, nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -303,7 +303,7 @@ func TestAPIServer_TaskCreateTask(t *testing.T) {
 			requestBody: `{"title": "New Task"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID) {
 				taskID := createTaskID(uuid.New().String())
-				createdTask := task.NewTask(taskID, "New Task", userID)
+				createdTask := task.NewTaskWithoutValidation(taskID, "New Task", userID)
 				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(createdTask, nil)
 			},
 			expectedStatusCode: http.StatusCreated,
@@ -407,7 +407,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			userID: testUserID,
 			taskID: testTaskID,
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
-				existingTask := task.NewTask(taskID, "Test Task", userID)
+				existingTask := task.NewTaskWithoutValidation(taskID, "Test Task", userID)
 				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -511,8 +511,8 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			taskID:      testTaskID,
 			requestBody: `{"title": "Updated Task"}`,
 			setupMock: func(mockRepo *mocks.MockTaskRepository, userID user.UserID, taskID task.TaskID) {
-				existingTask := task.NewTask(taskID, "Original Task", userID)
-				updatedTask := task.NewTask(taskID, "Updated Task", userID)
+				existingTask := task.NewTaskWithoutValidation(taskID, "Original Task", userID)
+				updatedTask := task.NewTaskWithoutValidation(taskID, "Updated Task", userID)
 				mockRepo.EXPECT().FindById(gomock.Any(), userID, taskID).Return(existingTask, nil)
 				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(updatedTask, nil)
 			},

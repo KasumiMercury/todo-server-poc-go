@@ -53,19 +53,9 @@ type Task struct {
 	userID user.UserID
 }
 
-// NewTask creates a new Task instance with the provided parameters.
-// It does not perform validation on the input parameters.
-func NewTask(id TaskID, title string, userID user.UserID) *Task {
-	return &Task{
-		id:     id,
-		title:  title,
-		userID: userID,
-	}
-}
-
-// NewTaskWithValidation creates a new Task instance with title validation.
+// NewTask creates a new Task instance with title validation.
 // It returns an error if the title is invalid according to business rules.
-func NewTaskWithValidation(id TaskID, title string, userID user.UserID) (*Task, error) {
+func NewTask(id TaskID, title string, userID user.UserID) (*Task, error) {
 	if err := validateTitle(title); err != nil {
 		return nil, err
 	}
@@ -75,6 +65,16 @@ func NewTaskWithValidation(id TaskID, title string, userID user.UserID) (*Task, 
 		title:  title,
 		userID: userID,
 	}, nil
+}
+
+// NewTaskWithoutValidation creates a new Task instance with the provided parameters.
+// It does not perform validation on the input parameters.
+func NewTaskWithoutValidation(id TaskID, title string, userID user.UserID) *Task {
+	return &Task{
+		id:     id,
+		title:  title,
+		userID: userID,
+	}
 }
 
 func validateTitle(title string) error {

@@ -108,11 +108,11 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 
 			if tt.expectedError == task.ErrTitleEmpty || tt.expectedError == task.ErrTitleTooLong {
 				// For title validation errors, the error comes from domain validation
-				_, err = task.NewTaskWithValidation(task.GenerateTaskID(), tt.title, tt.userID)
+				_, err = task.NewTask(task.GenerateTaskID(), tt.title, tt.userID)
 				createdTask = nil
 			} else {
 				// For valid cases or other errors, create domain model and call repository
-				taskEntity, validationErr := task.NewTaskWithValidation(task.GenerateTaskID(), tt.title, tt.userID)
+				taskEntity, validationErr := task.NewTask(task.GenerateTaskID(), tt.title, tt.userID)
 				if validationErr != nil {
 					err = validationErr
 					createdTask = nil
@@ -154,7 +154,7 @@ func TestTaskDB_Integration_FindById(t *testing.T) {
 	// Create test task
 	testUserID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
-	taskEntity, err := task.NewTaskWithValidation(task.GenerateTaskID(), "Test Task", testUserID)
+	taskEntity, err := task.NewTask(task.GenerateTaskID(), "Test Task", testUserID)
 	require.NoError(t, err)
 	createdTask, err := taskRepo.Create(ctx, taskEntity)
 	require.NoError(t, err)
@@ -237,16 +237,16 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 	user2ID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
-	taskEntity1, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 1 Task 1", user1ID)
+	taskEntity1, err := task.NewTask(task.GenerateTaskID(), "User 1 Task 1", user1ID)
 	require.NoError(t, err)
 	task1, err := taskRepo.Create(ctx, taskEntity1)
 	require.NoError(t, err)
-	taskEntity2, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 1 Task 2", user1ID)
+	taskEntity2, err := task.NewTask(task.GenerateTaskID(), "User 1 Task 2", user1ID)
 	require.NoError(t, err)
 	task2, err := taskRepo.Create(ctx, taskEntity2)
 	require.NoError(t, err)
 
-	taskEntity3, err := task.NewTaskWithValidation(task.GenerateTaskID(), "User 2 Task 1", user2ID)
+	taskEntity3, err := task.NewTask(task.GenerateTaskID(), "User 2 Task 1", user2ID)
 	require.NoError(t, err)
 	task3, err := taskRepo.Create(ctx, taskEntity3)
 	require.NoError(t, err)

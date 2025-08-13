@@ -49,15 +49,15 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.Us
 	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" { // test-user UUID
 		taskID1, _ := task.NewTaskID("3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
 		taskID2, _ := task.NewTaskID("4f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
-		task1 := task.NewTask(taskID1, "Test Task 1", userID)
-		task2 := task.NewTask(taskID2, "Test Task 2", userID)
+		task1 := task.NewTaskWithoutValidation(taskID1, "Test Task 1", userID)
+		task2 := task.NewTaskWithoutValidation(taskID2, "Test Task 2", userID)
 
 		return []*task.Task{task1, task2}, nil
 	}
 
 	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" { // other-user UUID
 		taskID3, _ := task.NewTaskID("5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
-		task3 := task.NewTask(taskID3, "Other User Task", userID)
+		task3 := task.NewTaskWithoutValidation(taskID3, "Other User Task", userID)
 
 		return []*task.Task{task3}, nil
 	}
@@ -67,11 +67,11 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.Us
 
 func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
 	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
-		return task.NewTask(id, "Test Task 1", userID), nil
+		return task.NewTaskWithoutValidation(id, "Test Task 1", userID), nil
 	}
 
 	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" && id.String() == "5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
-		return task.NewTask(id, "Other User Task", userID), nil
+		return task.NewTaskWithoutValidation(id, "Other User Task", userID), nil
 	}
 
 	return nil, task.ErrTaskNotFound
