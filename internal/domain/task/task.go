@@ -2,6 +2,7 @@ package task
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	"github.com/google/uuid"
@@ -82,7 +83,7 @@ func validateTitle(title string) error {
 		return ErrTitleEmpty
 	}
 
-	if len(title) > MaxTitleLength {
+	if utf8.RuneCountInString(title) > MaxTitleLength {
 		return ErrTitleTooLong
 	}
 
