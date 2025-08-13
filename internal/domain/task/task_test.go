@@ -72,7 +72,7 @@ func TestNewTaskWithValidation(t *testing.T) {
 			t.Parallel()
 
 			// Act
-			task, err := NewTaskWithValidation(tt.id, tt.title, tt.userID)
+			task, err := NewTask(tt.id, tt.title, tt.userID)
 
 			// Assert
 			if tt.expectedError != nil {
@@ -153,7 +153,7 @@ func TestTaskUpdateTitle(t *testing.T) {
 			t.Parallel()
 
 			// Arrange
-			task := NewTask(testID, tt.initialTitle, testUserID)
+			task := NewTaskWithoutValidation(testID, tt.initialTitle, testUserID)
 
 			// Act
 			err := task.UpdateTitle(tt.newTitle)
@@ -219,6 +219,101 @@ func TestValidateTitle(t *testing.T) {
 			title:         "  Valid Title  ",
 			expectedError: nil,
 		},
+		{
+			name:          "chinese characters exactly max length",
+			title:         strings.Repeat("你", MaxTitleLength),
+			expectedError: nil,
+		},
+		{
+			name:          "chinese characters over max length",
+			title:         strings.Repeat("你", MaxTitleLength+1),
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "korean characters exactly max length",
+			title:         strings.Repeat("안", MaxTitleLength),
+			expectedError: nil,
+		},
+		{
+			name:          "korean characters over max length",
+			title:         strings.Repeat("안", MaxTitleLength+1),
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "arabic characters exactly max length",
+			title:         strings.Repeat("م", MaxTitleLength),
+			expectedError: nil,
+		},
+		{
+			name:          "arabic characters over max length",
+			title:         strings.Repeat("م", MaxTitleLength+1),
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "zero-width joiner emoji with boundary consideration",
+			title:         strings.Repeat("👨‍💻", 85), // 85 * 3 runes = 255 runes
+			expectedError: nil,
+		},
+		{
+			name:          "zero-width joiner emoji over boundary",
+			title:         strings.Repeat("👨‍💻", 86), // 86 * 3 runes = 258 runes > 255
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "family emoji with boundary consideration",
+			title:         strings.Repeat("👨‍👩‍👧‍👦", 36), // 36 * 7 runes = 252 runes
+			expectedError: nil,
+		},
+		{
+			name:          "family emoji over boundary",
+			title:         strings.Repeat("👨‍👩‍👧‍👦", 37), // 37 * 7 runes = 259 runes > 255
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "skin tone emoji with boundary consideration",
+			title:         strings.Repeat("👋🏽", 127), // 127 * 2 runes = 254 runes
+			expectedError: nil,
+		},
+		{
+			name:          "skin tone emoji over boundary",
+			title:         strings.Repeat("👋🏽", 128), // 128 * 2 runes = 256 runes > 255
+			expectedError: ErrTitleTooLong,
+		},
+		{
+			name:          "unicode non-breaking space only",
+			title:         "\u00A0\u00A0\u00A0",
+			expectedError: ErrTitleEmpty,
+		},
+		{
+			name:          "unicode thin space only",
+			title:         "\u2009\u2009\u2009",
+			expectedError: ErrTitleEmpty,
+		},
+		{
+			name:          "ideographic space only",
+			title:         "　　　",
+			expectedError: ErrTitleEmpty,
+		},
+		{
+			name:          "zero-width space only",
+			title:         "​​​",
+			expectedError: ErrTitleEmpty, // Zero-width spaces are now trimmed
+		},
+		{
+			name:          "mixed unicode whitespace only",
+			title:         "\u00A0\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u3000",
+			expectedError: ErrTitleEmpty,
+		},
+		{
+			name:          "line separator character only",
+			title:         "\u2028\u2028",
+			expectedError: ErrTitleEmpty,
+		},
+		{
+			name:          "paragraph separator character only",
+			title:         "\u2029\u2029",
+			expectedError: ErrTitleEmpty,
+		},
 	}
 
 	for _, tt := range tests {
@@ -247,7 +342,7 @@ func TestTaskGetters(t *testing.T) {
 	expectedTitle := "Test Task Title"
 	expectedUserID := user.GenerateUserID()
 
-	task := NewTask(expectedID, expectedTitle, expectedUserID)
+	task := NewTaskWithoutValidation(expectedID, expectedTitle, expectedUserID)
 
 	// Act & Assert
 	assert.Equal(t, expectedID, task.ID())

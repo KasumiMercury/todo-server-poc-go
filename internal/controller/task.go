@@ -64,7 +64,7 @@ func (t *Task) CreateTask(ctx context.Context, userID user.UserID, title string)
 		return nil, user.ErrUserIDEmpty
 	}
 
-	taskEntity, err := task.NewTaskWithValidation(task.GenerateTaskID(), title, userID)
+	taskEntity, err := task.NewTask(task.GenerateTaskID(), title, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (t *Task) UpdateTask(ctx context.Context, userID user.UserID, id task.TaskI
 		return nil, task.ErrTaskIDEmpty
 	}
 
-	taskEntity, err := task.NewTaskWithValidation(id, title, userID)
+	taskEntity, err := task.NewTask(id, title, userID)
 	if err != nil {
 		return nil, err
 	}

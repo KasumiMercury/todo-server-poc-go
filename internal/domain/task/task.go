@@ -2,6 +2,8 @@ package task
 
 import (
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/domain/user"
 	"github.com/google/uuid"
@@ -52,19 +54,9 @@ type Task struct {
 	userID user.UserID
 }
 
-// NewTask creates a new Task instance with the provided parameters.
-// It does not perform validation on the input parameters.
-func NewTask(id TaskID, title string, userID user.UserID) *Task {
-	return &Task{
-		id:     id,
-		title:  title,
-		userID: userID,
-	}
-}
-
-// NewTaskWithValidation creates a new Task instance with title validation.
+// NewTask creates a new Task instance with title validation.
 // It returns an error if the title is invalid according to business rules.
-func NewTaskWithValidation(id TaskID, title string, userID user.UserID) (*Task, error) {
+func NewTask(id TaskID, title string, userID user.UserID) (*Task, error) {
 	if err := validateTitle(title); err != nil {
 		return nil, err
 	}
@@ -76,13 +68,39 @@ func NewTaskWithValidation(id TaskID, title string, userID user.UserID) (*Task, 
 	}, nil
 }
 
+// NewTaskWithoutValidation creates a new Task instance with the provided parameters.
+// It does not perform validation on the input parameters.
+func NewTaskWithoutValidation(id TaskID, title string, userID user.UserID) *Task {
+	return &Task{
+		id:     id,
+		title:  title,
+		userID: userID,
+	}
+}
+
+// trimSpaceAndZeroWidth removes leading/trailing spaces and zero-width characters
+func trimSpaceAndZeroWidth(s string) string {
+	// First trim standard spaces
+	s = strings.TrimSpace(s)
+
+	// Remove zero-width characters from both ends
+	return strings.TrimFunc(s, func(r rune) bool {
+		return unicode.IsSpace(r) ||
+			r == '\u200B' || // Zero-width space
+			r == '\u200C' || // Zero-width non-joiner
+			r == '\u200D' || // Zero-width joiner
+			r == '\u200E' || // Left-to-right mark
+			r == '\u200F' || // Right-to-left mark
+			r == '\uFEFF' // Zero-width no-break space (BOM)
+	})
+}
+
 func validateTitle(title string) error {
-	title = strings.TrimSpace(title)
-	if title == "" {
+	if trimSpaceAndZeroWidth(title) == "" {
 		return ErrTitleEmpty
 	}
 
-	if len(title) > MaxTitleLength {
+	if utf8.RuneCountInString(title) > MaxTitleLength {
 		return ErrTitleTooLong
 	}
 

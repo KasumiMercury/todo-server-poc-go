@@ -68,7 +68,7 @@ func TestTaskModel_ToDomain(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			expected:    task.NewTask(domainTaskID1, "Test Task", domainUserID1),
+			expected:    task.NewTaskWithoutValidation(domainTaskID1, "Test Task", domainUserID1),
 			expectError: false,
 		},
 		{
@@ -104,7 +104,7 @@ func TestTaskModel_ToDomain(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			expected:    task.NewTask(domainTaskID2, "タスク with émojis 🚀", domainUserID2),
+			expected:    task.NewTaskWithoutValidation(domainTaskID2, "タスク with émojis 🚀", domainUserID2),
 			expectError: false,
 		},
 	}

@@ -7,3 +7,14 @@ tasks:
     cmd: atlas schema inspect --env gorm --url "env://src"
   migrate-diff:
     cmd: atlas migrate diff --env gorm
+  fuzz:
+    desc: Run fuzz tests for all targets
+    cmds:
+      - go test -fuzz=FuzzValidateTitle ./internal/domain/task/ -fuzztime=10s
+      - go test -fuzz=FuzzNewTaskWithValidation ./internal/domain/task/ -fuzztime=10s
+  fuzz-validate-title:
+    desc: Run fuzz test for title validation
+    cmd: go test -fuzz=FuzzValidateTitle ./internal/domain/task/ -fuzztime=10s
+  fuzz-new-task:
+    desc: Run fuzz test for task creation
+    cmd: go test -fuzz=FuzzNewTaskWithValidation ./internal/domain/task/ -fuzztime=10s
