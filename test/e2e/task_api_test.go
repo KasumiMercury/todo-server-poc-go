@@ -357,36 +357,126 @@ func TestE2E_TaskValidation(t *testing.T) {
 		requestBody    interface{}
 		expectedStatus int
 		expectedError  string
+		expectedTitle  string
 	}{
 		{
 			name:           "empty title should return 400",
 			requestBody:    map[string]string{"title": ""},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "title field is required",
+			expectedTitle:  "",
 		},
 		{
 			name:           "missing title should return 400",
 			requestBody:    map[string]string{},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "title field is required",
+			expectedTitle:  "",
 		},
 		{
 			name:           "whitespace-only title should return 400",
 			requestBody:    map[string]string{"title": "   "},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "title cannot be empty",
+			expectedTitle:  "",
 		},
 		{
 			name:           "title too long should return 400",
 			requestBody:    map[string]string{"title": strings.Repeat("a", 256)},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "title cannot exceed 255 characters",
+			expectedTitle:  "",
 		},
 		{
 			name:           "valid title should return 201",
 			requestBody:    map[string]string{"title": "Valid Task Title"},
 			expectedStatus: http.StatusCreated,
 			expectedError:  "",
+			expectedTitle:  "Valid Task Title",
+		},
+		{
+			name:           "chinese characters exactly max length should return 201",
+			requestBody:    map[string]string{"title": strings.Repeat("你", 255)},
+			expectedStatus: http.StatusCreated,
+			expectedError:  "",
+			expectedTitle:  strings.Repeat("你", 255),
+		},
+		{
+			name:           "chinese characters over max length should return 400",
+			requestBody:    map[string]string{"title": strings.Repeat("你", 256)},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot exceed 255 characters",
+			expectedTitle:  "",
+		},
+		{
+			name:           "korean characters exactly max length should return 201",
+			requestBody:    map[string]string{"title": strings.Repeat("안", 255)},
+			expectedStatus: http.StatusCreated,
+			expectedError:  "",
+			expectedTitle:  strings.Repeat("안", 255),
+		},
+		{
+			name:           "korean characters over max length should return 400",
+			requestBody:    map[string]string{"title": strings.Repeat("안", 256)},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot exceed 255 characters",
+			expectedTitle:  "",
+		},
+		{
+			name:           "zero-width joiner emoji within boundary should return 201",
+			requestBody:    map[string]string{"title": strings.Repeat("👨‍💻", 85)}, // 85 * 3 = 255 runes
+			expectedStatus: http.StatusCreated,
+			expectedError:  "",
+			expectedTitle:  strings.Repeat("👨‍💻", 85),
+		},
+		{
+			name:           "zero-width joiner emoji over boundary should return 400",
+			requestBody:    map[string]string{"title": strings.Repeat("👨‍💻", 86)}, // 86 * 3 = 258 runes
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot exceed 255 characters",
+			expectedTitle:  "",
+		},
+		{
+			name:           "family emoji within boundary should return 201",
+			requestBody:    map[string]string{"title": strings.Repeat("👨‍👩‍👧‍👦", 36)}, // 36 * 7 = 252 runes
+			expectedStatus: http.StatusCreated,
+			expectedError:  "",
+			expectedTitle:  strings.Repeat("👨‍👩‍👧‍👦", 36),
+		},
+		{
+			name:           "family emoji over boundary should return 400",
+			requestBody:    map[string]string{"title": strings.Repeat("👨‍👩‍👧‍👦", 37)}, // 37 * 7 = 259 runes
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot exceed 255 characters",
+			expectedTitle:  "",
+		},
+		{
+			name:           "unicode non-breaking space only should return 400",
+			requestBody:    map[string]string{"title": "\u00A0\u00A0\u00A0"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot be empty",
+			expectedTitle:  "",
+		},
+		{
+			name:           "ideographic space only should return 400",
+			requestBody:    map[string]string{"title": "　　　"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot be empty",
+			expectedTitle:  "",
+		},
+		{
+			name:           "zero-width space only should return 400",
+			requestBody:    map[string]string{"title": "​​​"}, // Zero-width spaces are now trimmed
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot be empty",
+			expectedTitle:  "",
+		},
+		{
+			name:           "mixed unicode whitespace only should return 400",
+			requestBody:    map[string]string{"title": " ​ ‌ ‍   　"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "title cannot be empty",
+			expectedTitle:  "",
 		},
 	}
 
@@ -410,7 +500,7 @@ func TestE2E_TaskValidation(t *testing.T) {
 				err := json.Unmarshal(rec.Body.Bytes(), &task)
 				require.NoError(t, err)
 				assert.NotEmpty(t, task.Id)
-				assert.Equal(t, "Valid Task Title", task.Title)
+				assert.Equal(t, tt.expectedTitle, task.Title)
 			}
 		})
 	}
