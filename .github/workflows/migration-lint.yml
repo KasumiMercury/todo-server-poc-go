@@ -1,0 +1,29 @@
+name: migration-lint.yml
+on:
+  pull_request:
+    paths:
+      - 'migrations/**'
+  push:
+    paths:
+      - 'migrations/**'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Setup Atlas
+        uses: ariga/setup-atlas@4240bd74ba9f13319a21de2b6e497f2b6d184d76 # v0
+
+      - name: Lint Migrations
+        run: atlas migrate lint --dev-url "docker://postgres/17/test" --git-base "origin/main"
