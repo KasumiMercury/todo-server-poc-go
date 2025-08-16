@@ -14,55 +14,55 @@ func TestNewTaskWithValidation(t *testing.T) {
 
 	// Generate UUIDs for consistent test data
 	testID := GenerateTaskID()
-	testUserID := user.GenerateUserID()
+	testCreatorID := user.GenerateUserID()
 
 	tests := []struct {
 		name          string
 		id            TaskID
 		title         string
-		userID        user.UserID
+		creatorID     user.UserID
 		expectedError error
 	}{
 		{
 			name:          "valid task",
 			id:            testID,
 			title:         "Valid Task Title",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: nil,
 		},
 		{
 			name:          "empty title",
 			id:            testID,
 			title:         "",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: ErrTitleEmpty,
 		},
 		{
 			name:          "whitespace only title",
 			id:            testID,
 			title:         "   \n\t   ",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: ErrTitleEmpty,
 		},
 		{
 			name:          "title exactly max length",
 			id:            testID,
 			title:         strings.Repeat("a", MaxTitleLength),
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: nil,
 		},
 		{
 			name:          "title too long",
 			id:            testID,
 			title:         strings.Repeat("a", MaxTitleLength+1),
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: ErrTitleTooLong,
 		},
 		{
 			name:          "title with leading/trailing spaces (valid after trim)",
 			id:            testID,
 			title:         "  Valid Title  ",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			expectedError: nil,
 		},
 	}
@@ -72,7 +72,7 @@ func TestNewTaskWithValidation(t *testing.T) {
 			t.Parallel()
 
 			// Act
-			task, err := NewTask(tt.id, tt.title, tt.userID)
+			task, err := NewTask(tt.id, tt.title, tt.creatorID)
 
 			// Assert
 			if tt.expectedError != nil {
@@ -84,7 +84,7 @@ func TestNewTaskWithValidation(t *testing.T) {
 				require.NotNil(t, task)
 				assert.Equal(t, tt.id, task.ID())
 				assert.Equal(t, tt.title, task.Title())
-				assert.Equal(t, tt.userID, task.UserID())
+				assert.Equal(t, tt.creatorID, task.UserID())
 			}
 		})
 	}
