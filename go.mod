@@ -1,6 +1,6 @@
 module github.com/KasumiMercury/todo-server-poc-go
 
-go 1.24.5
+go 1.25.0
 
 require (
 	github.com/getkin/kin-openapi v0.132.0
