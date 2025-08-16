@@ -16,7 +16,7 @@ jobs:
       go-version: ${{ steps.set_go.outputs.go-version }}
     steps:
       - id: go-version
-        run: echo "version=1.22" >> $GITHUB_OUTPUT
+        run: echo "version=1.25" >> $GITHUB_OUTPUT
 
   test:
     needs: setup
