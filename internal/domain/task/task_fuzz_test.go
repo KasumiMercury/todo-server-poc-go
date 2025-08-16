@@ -134,12 +134,12 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 	f.Fuzz(func(t *testing.T, title string) {
 		taskID := GenerateTaskID()
 
-		userID, err := user.NewUserID("550e8400-e29b-41d4-a716-446655440000")
+		creatorID, err := user.NewUserID("550e8400-e29b-41d4-a716-446655440000")
 		if err != nil {
 			t.Fatalf("Failed to create test user ID: %v", err)
 		}
 
-		task, err := NewTask(taskID, title, userID)
+		task, err := NewTask(taskID, title, creatorID)
 
 		trimmed := strings.TrimSpace(title)
 		trimmed = strings.TrimFunc(trimmed, func(r rune) bool {
@@ -186,8 +186,8 @@ func FuzzNewTaskWithValidation(f *testing.F) {
 					t.Errorf("Task title mismatch: expected %q, got %q", title, task.Title())
 				}
 
-				if task.UserID() != userID {
-					t.Errorf("Task user ID mismatch: expected %v, got %v", userID, task.UserID())
+				if task.UserID() != creatorID {
+					t.Errorf("Task user ID mismatch: expected %v, got %v", creatorID, task.UserID())
 				}
 			}
 		}

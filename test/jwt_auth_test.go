@@ -44,20 +44,20 @@ func (m *MockHealthService) CheckHealth(ctx context.Context) service.HealthStatu
 	}
 }
 
-func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
+func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, creatorID user.UserID) ([]*task.Task, error) {
 	// Return mock tasks for the specific user
-	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" { // test-user UUID
+	if creatorID.String() == "550e8400-e29b-41d4-a716-446655440000" { // test-user UUID
 		taskID1, _ := task.NewTaskID("3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
 		taskID2, _ := task.NewTaskID("4f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
-		task1 := task.NewTaskWithoutValidation(taskID1, "Test Task 1", userID)
-		task2 := task.NewTaskWithoutValidation(taskID2, "Test Task 2", userID)
+		task1 := task.NewTaskWithoutValidation(taskID1, "Test Task 1", creatorID)
+		task2 := task.NewTaskWithoutValidation(taskID2, "Test Task 2", creatorID)
 
 		return []*task.Task{task1, task2}, nil
 	}
 
-	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" { // other-user UUID
+	if creatorID.String() == "660e8400-e29b-41d4-a716-446655440000" { // other-user UUID
 		taskID3, _ := task.NewTaskID("5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f")
-		task3 := task.NewTaskWithoutValidation(taskID3, "Other User Task", userID)
+		task3 := task.NewTaskWithoutValidation(taskID3, "Other User Task", creatorID)
 
 		return []*task.Task{task3}, nil
 	}
@@ -65,13 +65,13 @@ func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.Us
 	return []*task.Task{}, nil
 }
 
-func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
-	if userID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
-		return task.NewTaskWithoutValidation(id, "Test Task 1", userID), nil
+func (m *MockTaskRepository) FindById(ctx context.Context, creatorID user.UserID, id task.TaskID) (*task.Task, error) {
+	if creatorID.String() == "550e8400-e29b-41d4-a716-446655440000" && id.String() == "3f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
+		return task.NewTaskWithoutValidation(id, "Test Task 1", creatorID), nil
 	}
 
-	if userID.String() == "660e8400-e29b-41d4-a716-446655440000" && id.String() == "5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
-		return task.NewTaskWithoutValidation(id, "Other User Task", userID), nil
+	if creatorID.String() == "660e8400-e29b-41d4-a716-446655440000" && id.String() == "5f6e5e6b-3d6f-4f5e-b5e6-3f6e5e6b3d6f" {
+		return task.NewTaskWithoutValidation(id, "Other User Task", creatorID), nil
 	}
 
 	return nil, task.ErrTaskNotFound
@@ -412,8 +412,8 @@ func TestUserTaskSeparation(t *testing.T) {
 			t.Fatalf("Failed to unmarshal response: %v", err)
 		}
 
-		if _, exists := response["userId"]; exists {
-			t.Error("Response should not contain userId field")
+		if _, exists := response["creatorId"]; exists {
+			t.Error("Response should not contain creatorId field")
 		}
 
 		if response["title"] != "Test User New Task" {

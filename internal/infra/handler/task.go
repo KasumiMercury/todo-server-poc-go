@@ -53,7 +53,7 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
-	// Convert string userID to domain UserID
+	// Convert string userID to domain CreatorID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -103,7 +103,7 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	// Convert string userID to domain UserID
+	// Convert string userID to domain CreatorID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -144,7 +144,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	// Convert string userID to domain UserID
+	// Convert string userID to domain CreatorID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -185,7 +185,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	// Convert string userID to domain UserID
+	// Convert string userID to domain CreatorID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -247,7 +247,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	// Convert string userID to domain UserID
+	// Convert string userID to domain CreatorID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()

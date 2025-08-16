@@ -64,34 +64,34 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 	taskRepo := repository.NewTaskDB(db)
 	ctx := context.Background()
 
-	userID1, err := user.NewUserID(uuid.New().String())
+	creatorID1, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
-	userID2, err := user.NewUserID(uuid.New().String())
+	creatorID2, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
-	userID3, err := user.NewUserID(uuid.New().String())
+	creatorID3, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
-		userID        user.UserID
+		creatorID     user.UserID
 		title         string
 		expectedError error
 	}{
 		{
 			name:          "successful creation",
-			userID:        userID1,
+			creatorID:     creatorID1,
 			title:         "Integration Test Task",
 			expectedError: nil,
 		},
 		{
 			name:          "create multiple tasks for same user",
-			userID:        userID2,
+			creatorID:     creatorID2,
 			title:         "Second Task",
 			expectedError: nil,
 		},
 		{
 			name:          "create task for different user",
-			userID:        userID3,
+			creatorID:     creatorID3,
 			title:         "Other User Task",
 			expectedError: nil,
 		},
@@ -109,11 +109,11 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 
 			if tt.expectedError == task.ErrTitleEmpty || tt.expectedError == task.ErrTitleTooLong {
 				// For title validation errors, the error comes from domain validation
-				_, err = task.NewTask(task.GenerateTaskID(), tt.title, tt.userID)
+				_, err = task.NewTask(task.GenerateTaskID(), tt.title, tt.creatorID)
 				createdTask = nil
 			} else {
 				// For valid cases or other errors, create domain model and call repository
-				taskEntity, validationErr := task.NewTask(task.GenerateTaskID(), tt.title, tt.userID)
+				taskEntity, validationErr := task.NewTask(task.GenerateTaskID(), tt.title, tt.creatorID)
 				if validationErr != nil {
 					err = validationErr
 					createdTask = nil
@@ -132,7 +132,7 @@ func TestTaskDB_Integration_Create(t *testing.T) {
 				require.NotNil(t, createdTask)
 				assert.False(t, createdTask.ID().IsEmpty())
 				assert.Equal(t, tt.title, createdTask.Title())
-				assert.Equal(t, tt.userID, createdTask.UserID())
+				assert.Equal(t, tt.creatorID, createdTask.UserID())
 			}
 		})
 	}
@@ -153,15 +153,15 @@ func TestTaskDB_Integration_FindById(t *testing.T) {
 	ctx := context.Background()
 
 	// Create test task
-	testUserID, err := user.NewUserID(uuid.New().String())
+	testCreatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
-	taskEntity, err := task.NewTask(task.GenerateTaskID(), "Test Task", testUserID)
+	taskEntity, err := task.NewTask(task.GenerateTaskID(), "Test Task", testCreatorID)
 	require.NoError(t, err)
 	createdTask, err := taskRepo.Create(ctx, taskEntity)
 	require.NoError(t, err)
 	require.NotNil(t, createdTask)
 
-	diffUserID, err := user.NewUserID(uuid.New().String())
+	diffCreatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	nonExistentTaskID, err := task.NewTaskID(uuid.New().String())
@@ -169,28 +169,28 @@ func TestTaskDB_Integration_FindById(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		userID        user.UserID
+		creatorID     user.UserID
 		taskID        task.TaskID
 		expectedTask  *task.Task
 		expectedError error
 	}{
 		{
 			name:          "find existing task",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			taskID:        createdTask.ID(),
 			expectedTask:  createdTask,
 			expectedError: nil,
 		},
 		{
 			name:          "task not found for different user",
-			userID:        diffUserID,
+			creatorID:     diffCreatorID,
 			taskID:        createdTask.ID(),
 			expectedTask:  nil,
 			expectedError: task.ErrTaskNotFound,
 		},
 		{
 			name:          "task not found - nonexistent ID",
-			userID:        testUserID,
+			creatorID:     testCreatorID,
 			taskID:        nonExistentTaskID,
 			expectedTask:  nil,
 			expectedError: task.ErrTaskNotFound,
@@ -200,7 +200,7 @@ func TestTaskDB_Integration_FindById(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			foundTask, err := taskRepo.FindById(ctx, tt.userID, tt.taskID)
+			foundTask, err := taskRepo.FindById(ctx, tt.creatorID, tt.taskID)
 
 			// Assert
 			if tt.expectedError != nil {
@@ -252,30 +252,30 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 	task3, err := taskRepo.Create(ctx, taskEntity3)
 	require.NoError(t, err)
 
-	noTasksUserID, err := user.NewUserID(uuid.New().String())
+	noTasksCreatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
-		userID        user.UserID
+		creatorID     user.UserID
 		expectedTasks int
 		expectedError error
 	}{
 		{
 			name:          "find tasks for user with multiple tasks",
-			userID:        user1ID,
+			creatorID:     user1ID,
 			expectedTasks: 2,
 			expectedError: nil,
 		},
 		{
 			name:          "find tasks for user with single task",
-			userID:        user2ID,
+			creatorID:     user2ID,
 			expectedTasks: 1,
 			expectedError: nil,
 		},
 		{
 			name:          "find tasks for user with no tasks",
-			userID:        noTasksUserID,
+			creatorID:     noTasksCreatorID,
 			expectedTasks: 0,
 			expectedError: task.ErrTaskNotFound,
 		},
@@ -284,7 +284,7 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			tasks, err := taskRepo.FindAllByUserID(ctx, tt.userID)
+			tasks, err := taskRepo.FindAllByUserID(ctx, tt.creatorID)
 
 			// Assert
 			if tt.expectedError != nil {
@@ -297,7 +297,7 @@ func TestTaskDB_Integration_FindAllByUserID(t *testing.T) {
 
 				// Verify all tasks belong to the correct user
 				for _, item := range tasks {
-					assert.Equal(t, tt.userID, item.UserID())
+					assert.Equal(t, tt.creatorID, item.UserID())
 				}
 			}
 		})
@@ -340,7 +340,7 @@ func TestTaskDB_Integration_MultiByteTitles(t *testing.T) {
 	ctx := context.Background()
 	taskRepo := repository.NewTaskDB(db)
 
-	userID, err := user.NewUserID(uuid.New().String())
+	creatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -372,7 +372,7 @@ func TestTaskDB_Integration_MultiByteTitles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create task entity with multibyte title
-			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, userID)
+			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, creatorID)
 			require.NoError(t, err)
 
 			// Act - Create task in database
@@ -381,16 +381,16 @@ func TestTaskDB_Integration_MultiByteTitles(t *testing.T) {
 			// Assert
 			require.NoError(t, err)
 			assert.Equal(t, tt.title, createdTask.Title())
-			assert.Equal(t, userID, createdTask.UserID())
+			assert.Equal(t, creatorID, createdTask.UserID())
 
 			// Act - Retrieve task from database
-			retrievedTask, err := taskRepo.FindById(ctx, userID, createdTask.ID())
+			retrievedTask, err := taskRepo.FindById(ctx, creatorID, createdTask.ID())
 
 			// Assert
 			require.NoError(t, err)
 			assert.Equal(t, tt.title, retrievedTask.Title())
 			assert.Equal(t, createdTask.ID(), retrievedTask.ID())
-			assert.Equal(t, userID, retrievedTask.UserID())
+			assert.Equal(t, creatorID, retrievedTask.UserID())
 		})
 	}
 }
@@ -409,7 +409,7 @@ func TestTaskDB_Integration_ZeroWidthJoinerTitles(t *testing.T) {
 	ctx := context.Background()
 	taskRepo := repository.NewTaskDB(db)
 
-	userID, err := user.NewUserID(uuid.New().String())
+	creatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -441,7 +441,7 @@ func TestTaskDB_Integration_ZeroWidthJoinerTitles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create task entity with ZWJ emoji title
-			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, userID)
+			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, creatorID)
 			require.NoError(t, err)
 
 			// Act - Create task in database
@@ -450,16 +450,16 @@ func TestTaskDB_Integration_ZeroWidthJoinerTitles(t *testing.T) {
 			// Assert
 			require.NoError(t, err)
 			assert.Equal(t, tt.title, createdTask.Title())
-			assert.Equal(t, userID, createdTask.UserID())
+			assert.Equal(t, creatorID, createdTask.UserID())
 
 			// Act - Retrieve task from database
-			retrievedTask, err := taskRepo.FindById(ctx, userID, createdTask.ID())
+			retrievedTask, err := taskRepo.FindById(ctx, creatorID, createdTask.ID())
 
 			// Assert
 			require.NoError(t, err)
 			assert.Equal(t, tt.title, retrievedTask.Title())
 			assert.Equal(t, createdTask.ID(), retrievedTask.ID())
-			assert.Equal(t, userID, retrievedTask.UserID())
+			assert.Equal(t, creatorID, retrievedTask.UserID())
 		})
 	}
 }
@@ -478,7 +478,7 @@ func TestTaskDB_Integration_BoundaryTitles(t *testing.T) {
 	ctx := context.Background()
 	taskRepo := repository.NewTaskDB(db)
 
-	userID, err := user.NewUserID(uuid.New().String())
+	creatorID, err := user.NewUserID(uuid.New().String())
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -525,7 +525,7 @@ func TestTaskDB_Integration_BoundaryTitles(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act - Create task entity with boundary title
-			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, userID)
+			taskEntity, err := task.NewTask(task.GenerateTaskID(), tt.title, creatorID)
 
 			if tt.shouldSucceed {
 				// Assert successful creation
@@ -539,7 +539,7 @@ func TestTaskDB_Integration_BoundaryTitles(t *testing.T) {
 				assert.Equal(t, tt.title, createdTask.Title())
 
 				// Act - Retrieve task from database to ensure roundtrip works
-				retrievedTask, err := taskRepo.FindById(ctx, userID, createdTask.ID())
+				retrievedTask, err := taskRepo.FindById(ctx, creatorID, createdTask.ID())
 
 				// Assert
 				require.NoError(t, err)

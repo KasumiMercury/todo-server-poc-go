@@ -43,15 +43,15 @@ func TestTaskModel_ToDomain(t *testing.T) {
 
 	// Generate UUIDs for test data
 	testID1 := uuid.New().String()
-	testUserID1 := uuid.New().String()
+	testCreatorID1 := uuid.New().String()
 	testID2 := uuid.New().String()
-	testUserID2 := uuid.New().String()
+	testCreatorID2 := uuid.New().String()
 
 	// Create domain types for expectations
 	domainTaskID1, _ := task.NewTaskID(testID1)
-	domainUserID1, _ := user.NewUserID(testUserID1)
+	domainCreatorID1, _ := user.NewUserID(testCreatorID1)
 	domainTaskID2, _ := task.NewTaskID(testID2)
-	domainUserID2, _ := user.NewUserID(testUserID2)
+	domainCreatorID2, _ := user.NewUserID(testCreatorID2)
 
 	tests := []struct {
 		name        string
@@ -64,11 +64,11 @@ func TestTaskModel_ToDomain(t *testing.T) {
 			taskModel: TaskModel{
 				ID:        testID1,
 				Title:     "Test Task",
-				UserID:    testUserID1,
+				CreatorID: testCreatorID1,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			expected:    task.NewTaskWithoutValidation(domainTaskID1, "Test Task", domainUserID1),
+			expected:    task.NewTaskWithoutValidation(domainTaskID1, "Test Task", domainCreatorID1),
 			expectError: false,
 		},
 		{
@@ -76,7 +76,7 @@ func TestTaskModel_ToDomain(t *testing.T) {
 			taskModel: TaskModel{
 				ID:        "invalid-uuid",
 				Title:     "Test Task",
-				UserID:    testUserID1,
+				CreatorID: testCreatorID1,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
@@ -88,7 +88,7 @@ func TestTaskModel_ToDomain(t *testing.T) {
 			taskModel: TaskModel{
 				ID:        testID1,
 				Title:     "Test Task",
-				UserID:    "invalid-uuid",
+				CreatorID: "invalid-uuid",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
@@ -100,11 +100,11 @@ func TestTaskModel_ToDomain(t *testing.T) {
 			taskModel: TaskModel{
 				ID:        testID2,
 				Title:     "タスク with émojis 🚀",
-				UserID:    testUserID2,
+				CreatorID: testCreatorID2,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			expected:    task.NewTaskWithoutValidation(domainTaskID2, "タスク with émojis 🚀", domainUserID2),
+			expected:    task.NewTaskWithoutValidation(domainTaskID2, "タスク with émojis 🚀", domainCreatorID2),
 			expectError: false,
 		},
 	}

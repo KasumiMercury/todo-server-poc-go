@@ -49,32 +49,32 @@ func (t TaskID) IsEmpty() bool {
 // Task represents a task entity in the domain layer.
 // It encapsulates task data and business logic for task management.
 type Task struct {
-	id     TaskID
-	title  string
-	userID user.UserID
+	id        TaskID
+	title     string
+	creatorID user.UserID
 }
 
 // NewTask creates a new Task instance with title validation.
 // It returns an error if the title is invalid according to business rules.
-func NewTask(id TaskID, title string, userID user.UserID) (*Task, error) {
+func NewTask(id TaskID, title string, creatorID user.UserID) (*Task, error) {
 	if err := validateTitle(title); err != nil {
 		return nil, err
 	}
 
 	return &Task{
-		id:     id,
-		title:  title,
-		userID: userID,
+		id:        id,
+		title:     title,
+		creatorID: creatorID,
 	}, nil
 }
 
 // NewTaskWithoutValidation creates a new Task instance with the provided parameters.
 // It does not perform validation on the input parameters.
-func NewTaskWithoutValidation(id TaskID, title string, userID user.UserID) *Task {
+func NewTaskWithoutValidation(id TaskID, title string, creatorID user.UserID) *Task {
 	return &Task{
-		id:     id,
-		title:  title,
-		userID: userID,
+		id:        id,
+		title:     title,
+		creatorID: creatorID,
 	}
 }
 
@@ -116,7 +116,7 @@ func (t *Task) Title() string {
 }
 
 func (t *Task) UserID() user.UserID {
-	return t.userID
+	return t.creatorID
 }
 
 func (t *Task) UpdateTitle(title string) error {

@@ -16,7 +16,7 @@ import (
 type TaskModel struct {
 	ID        string    `gorm:"primaryKey;type:varchar(36)"`
 	Title     string    `gorm:"not null;type:varchar(255)"`
-	UserID    string    `gorm:"not null;type:varchar(255);index"` // Note: This stores userId from JWT sub claim, which may change in the future
+	CreatorID string    `gorm:"not null;type:varchar(255);index"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
@@ -33,12 +33,12 @@ func (t TaskModel) ToDomain() (*task.Task, error) {
 		return nil, err
 	}
 
-	userID, err := user.NewUserID(t.UserID)
+	creatorID, err := user.NewUserID(t.CreatorID)
 	if err != nil {
 		return nil, err
 	}
 
-	return task.NewTaskWithoutValidation(taskID, t.Title, userID), nil
+	return task.NewTaskWithoutValidation(taskID, t.Title, creatorID), nil
 }
 
 // TaskDB implements the TaskRepository interface using GORM for database operations.
@@ -51,8 +51,8 @@ func NewTaskDB(db *gorm.DB) *TaskDB {
 	return &TaskDB{db: db}
 }
 
-func (t *TaskDB) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
-	if userID.IsEmpty() {
+func (t *TaskDB) FindById(ctx context.Context, creatorID user.UserID, id task.TaskID) (*task.Task, error) {
+	if creatorID.IsEmpty() {
 		return nil, user.ErrUserIDEmpty
 	}
 
@@ -60,7 +60,7 @@ func (t *TaskDB) FindById(ctx context.Context, userID user.UserID, id task.TaskI
 		return nil, task.ErrTaskIDEmpty
 	}
 
-	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).First(ctx)
+	taskRecord, err := gorm.G[TaskModel](t.db).Where("id = ? AND creator_id = ?", id.String(), creatorID.String()).First(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, task.ErrTaskNotFound
@@ -72,12 +72,12 @@ func (t *TaskDB) FindById(ctx context.Context, userID user.UserID, id task.TaskI
 	return taskRecord.ToDomain()
 }
 
-func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
-	if userID.IsEmpty() {
+func (t *TaskDB) FindAllByUserID(ctx context.Context, creatorID user.UserID) ([]*task.Task, error) {
+	if creatorID.IsEmpty() {
 		return nil, user.ErrUserIDEmpty
 	}
 
-	taskRecords, err := gorm.G[TaskModel](t.db).Where("user_id = ?", userID.String()).Find(ctx)
+	taskRecords, err := gorm.G[TaskModel](t.db).Where("creator_id = ?", creatorID.String()).Find(ctx)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, task.ErrTaskNotFound
@@ -105,9 +105,9 @@ func (t *TaskDB) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*ta
 
 func (t *TaskDB) Create(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
 	taskModel := &TaskModel{ //nolint:exhaustruct
-		ID:     taskEntity.ID().String(),
-		Title:  taskEntity.Title(),
-		UserID: taskEntity.UserID().String(),
+		ID:        taskEntity.ID().String(),
+		Title:     taskEntity.Title(),
+		CreatorID: taskEntity.UserID().String(),
 	}
 
 	result := gorm.WithResult()
@@ -118,8 +118,8 @@ func (t *TaskDB) Create(ctx context.Context, taskEntity *task.Task) (*task.Task,
 	return taskModel.ToDomain()
 }
 
-func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID) error {
-	if userID.IsEmpty() {
+func (t *TaskDB) Delete(ctx context.Context, creatorID user.UserID, id task.TaskID) error {
+	if creatorID.IsEmpty() {
 		return user.ErrUserIDEmpty
 	}
 
@@ -127,7 +127,7 @@ func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID)
 		return task.ErrTaskIDEmpty
 	}
 
-	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", id.String(), userID.String()).Delete(ctx); err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND creator_id = ?", id.String(), creatorID.String()).Delete(ctx); err != nil {
 		return err
 	}
 
@@ -136,12 +136,12 @@ func (t *TaskDB) Delete(ctx context.Context, userID user.UserID, id task.TaskID)
 
 func (t *TaskDB) Update(ctx context.Context, taskEntity *task.Task) (*task.Task, error) {
 	taskModel := &TaskModel{ //nolint:exhaustruct
-		ID:     taskEntity.ID().String(),
-		Title:  taskEntity.Title(),
-		UserID: taskEntity.UserID().String(),
+		ID:        taskEntity.ID().String(),
+		Title:     taskEntity.Title(),
+		CreatorID: taskEntity.UserID().String(),
 	}
 
-	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND user_id = ?", taskEntity.ID().String(), taskEntity.UserID().String()).Updates(ctx, *taskModel); err != nil {
+	if _, err := gorm.G[TaskModel](t.db).Where("id = ? AND creator_id = ?", taskEntity.ID().String(), taskEntity.UserID().String()).Updates(ctx, *taskModel); err != nil {
 		return nil, err
 	}
 
