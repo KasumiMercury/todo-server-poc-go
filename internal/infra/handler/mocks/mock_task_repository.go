@@ -58,47 +58,47 @@ func (mr *MockTaskRepositoryMockRecorder) Create(ctx, arg1 any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockTaskRepository) Delete(ctx context.Context, userID user.UserID, id task.TaskID) error {
+func (m *MockTaskRepository) Delete(ctx context.Context, creatorID user.UserID, id task.TaskID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, userID, id)
+	ret := m.ctrl.Call(m, "Delete", ctx, creatorID, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockTaskRepositoryMockRecorder) Delete(ctx, userID, id any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) Delete(ctx, creatorID, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaskRepository)(nil).Delete), ctx, userID, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockTaskRepository)(nil).Delete), ctx, creatorID, id)
 }
 
 // FindAllByUserID mocks base method.
-func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, userID user.UserID) ([]*task.Task, error) {
+func (m *MockTaskRepository) FindAllByUserID(ctx context.Context, creatorID user.UserID) ([]*task.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllByUserID", ctx, userID)
+	ret := m.ctrl.Call(m, "FindAllByUserID", ctx, creatorID)
 	ret0, _ := ret[0].([]*task.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindAllByUserID indicates an expected call of FindAllByUserID.
-func (mr *MockTaskRepositoryMockRecorder) FindAllByUserID(ctx, userID any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) FindAllByUserID(ctx, creatorID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserID", reflect.TypeOf((*MockTaskRepository)(nil).FindAllByUserID), ctx, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserID", reflect.TypeOf((*MockTaskRepository)(nil).FindAllByUserID), ctx, creatorID)
 }
 
 // FindById mocks base method.
-func (m *MockTaskRepository) FindById(ctx context.Context, userID user.UserID, id task.TaskID) (*task.Task, error) {
+func (m *MockTaskRepository) FindById(ctx context.Context, creatorID user.UserID, id task.TaskID) (*task.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindById", ctx, userID, id)
+	ret := m.ctrl.Call(m, "FindById", ctx, creatorID, id)
 	ret0, _ := ret[0].(*task.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindById indicates an expected call of FindById.
-func (mr *MockTaskRepositoryMockRecorder) FindById(ctx, userID, id any) *gomock.Call {
+func (mr *MockTaskRepositoryMockRecorder) FindById(ctx, creatorID, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockTaskRepository)(nil).FindById), ctx, userID, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockTaskRepository)(nil).FindById), ctx, creatorID, id)
 }
 
 // Update mocks base method.
