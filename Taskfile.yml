@@ -4,9 +4,28 @@ version: '3'
 
 tasks:
   inspect:
+    desc: Inspect the database schema
     cmd: atlas schema inspect --env gorm --url "env://src"
   migrate-diff:
-    cmd: atlas migrate diff --env gorm
+    desc: Generate migration diff for the specified description
+    aliases:
+      - migd
+    vars:
+      DESC: '{{.CLI_ARGS}}'
+    cmds:
+      - |
+        if [ -z "{{.DESC}}" ]; then
+          echo "Please provide a description for the migration diff."
+          exit 1
+        fi
+        if echo "{{.DESC}}" | grep -q '^[a-z0-9_-]\+$'; then
+          echo "Generating migration diff with description: {{.DESC}}"
+        else
+          echo "Invalid description format. Only lowercase letters, numbers, underscores, and hyphens are allowed."
+          exit 1
+        fi
+        atlas migrate diff {{.DESC}} --env gorm
+    silent: true
   fuzz:
     desc: Run fuzz tests for all targets
     cmds:
