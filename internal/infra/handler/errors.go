@@ -5,8 +5,8 @@ import (
 )
 
 // NewError creates a new Error using the generated Error struct
-func NewError(code int, message string, details *string) generated.Error {
-	return generated.Error{
+func NewError(code int, message string, details *string) generated.ErrorResponse {
+	return generated.ErrorResponse{
 		Code:    code,
 		Message: message,
 		Details: details,
@@ -14,21 +14,21 @@ func NewError(code int, message string, details *string) generated.Error {
 }
 
 // NewBadRequestError creates a 400 Bad Request error
-func NewBadRequestError(message string, details *string) generated.Error {
+func NewBadRequestError(message string, details *string) generated.ErrorResponse {
 	return NewError(400, message, details)
 }
 
 // NewUnauthorizedError creates a 401 Unauthorized error
-func NewUnauthorizedError(message string, details *string) generated.Error {
+func NewUnauthorizedError(message string, details *string) generated.ErrorResponse {
 	return NewError(401, message, details)
 }
 
 // NewNotFoundError creates a 404 Not Found error
-func NewNotFoundError(message string) generated.Error {
+func NewNotFoundError(message string) generated.ErrorResponse {
 	return NewError(404, message, nil)
 }
 
 // NewInternalServerError creates a 500 Internal Server Error
-func NewInternalServerError(message string, details *string) generated.Error {
+func NewInternalServerError(message string, details *string) generated.ErrorResponse {
 	return NewError(500, message, details)
 }
