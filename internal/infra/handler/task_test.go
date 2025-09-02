@@ -577,7 +577,7 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			assert.Equal(t, tt.expectedStatusCode, rec.Code)
 
 			if tt.expectedStatusCode >= 400 {
-				var errorResponse generated.Error
+				var errorResponse generated.ErrorResponse
 
 				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 				assert.NoError(t, unmarshalErr)
@@ -756,7 +756,7 @@ func TestTaskMalformedRequests(t *testing.T) {
 			assert.Equal(t, tt.expectedStatusCode, rec.Code)
 
 			if tt.expectedStatusCode >= 400 {
-				var errorResponse generated.Error
+				var errorResponse generated.ErrorResponse
 
 				unmarshalErr := json.Unmarshal(rec.Body.Bytes(), &errorResponse)
 				assert.NoError(t, unmarshalErr)

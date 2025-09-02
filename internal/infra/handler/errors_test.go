@@ -311,7 +311,7 @@ func TestErrorStruct_Structure(t *testing.T) {
 
 		// Arrange
 		details := "test details"
-		err := generated.Error{
+		err := generated.ErrorResponse{
 			Code:    400,
 			Message: "test message",
 			Details: &details,
@@ -328,7 +328,7 @@ func TestErrorStruct_Structure(t *testing.T) {
 		t.Parallel()
 
 		// Arrange
-		err := generated.Error{
+		err := generated.ErrorResponse{
 			Code:    404,
 			Message: "not found",
 			Details: nil,
@@ -346,13 +346,13 @@ func TestErrorFunctions_HTTPStatusCodes(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		errorFunc      func() generated.Error
+		errorFunc      func() generated.ErrorResponse
 		expectedCode   int
 		expectedStatus string
 	}{
 		{
 			name: "bad request",
-			errorFunc: func() generated.Error {
+			errorFunc: func() generated.ErrorResponse {
 				return NewBadRequestError("test", nil)
 			},
 			expectedCode:   400,
@@ -360,7 +360,7 @@ func TestErrorFunctions_HTTPStatusCodes(t *testing.T) {
 		},
 		{
 			name: "unauthorized",
-			errorFunc: func() generated.Error {
+			errorFunc: func() generated.ErrorResponse {
 				return NewUnauthorizedError("test", nil)
 			},
 			expectedCode:   401,
@@ -368,7 +368,7 @@ func TestErrorFunctions_HTTPStatusCodes(t *testing.T) {
 		},
 		{
 			name: "not found",
-			errorFunc: func() generated.Error {
+			errorFunc: func() generated.ErrorResponse {
 				return NewNotFoundError("test")
 			},
 			expectedCode:   404,
@@ -376,7 +376,7 @@ func TestErrorFunctions_HTTPStatusCodes(t *testing.T) {
 		},
 		{
 			name: "internal server error",
-			errorFunc: func() generated.Error {
+			errorFunc: func() generated.ErrorResponse {
 				return NewInternalServerError("test", nil)
 			},
 			expectedCode:   500,
