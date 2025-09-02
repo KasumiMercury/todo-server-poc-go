@@ -233,7 +233,7 @@ func TestE2E_TaskCRUDOperations(t *testing.T) {
 		assert.NotEmpty(t, createdTask.Id)
 		assert.Equal(t, "E2E Test Task", createdTask.Title)
 
-		createdTaskID = createdTask.Id
+		createdTaskID = createdTask.Id.String()
 	})
 
 	t.Run("3. Get all tasks - should contain one task", func(t *testing.T) {
@@ -249,7 +249,7 @@ func TestE2E_TaskCRUDOperations(t *testing.T) {
 		err = json.Unmarshal(rec.Body.Bytes(), &tasks)
 		require.NoError(t, err)
 		assert.Len(t, tasks, 1)
-		assert.Equal(t, createdTaskID, tasks[0].Id)
+		assert.Equal(t, createdTaskID, tasks[0].Id.String())
 		assert.Equal(t, "E2E Test Task", tasks[0].Title)
 	})
 
@@ -265,7 +265,7 @@ func TestE2E_TaskCRUDOperations(t *testing.T) {
 
 		err = json.Unmarshal(rec.Body.Bytes(), &task)
 		require.NoError(t, err)
-		assert.Equal(t, createdTaskID, task.Id)
+		assert.Equal(t, createdTaskID, task.Id.String())
 		assert.Equal(t, "E2E Test Task", task.Title)
 	})
 
@@ -286,7 +286,7 @@ func TestE2E_TaskCRUDOperations(t *testing.T) {
 
 		err = json.Unmarshal(rec.Body.Bytes(), &updatedTask)
 		require.NoError(t, err)
-		assert.Equal(t, createdTaskID, updatedTask.Id)
+		assert.Equal(t, createdTaskID, updatedTask.Id.String())
 		assert.Equal(t, "Updated E2E Test Task", updatedTask.Title)
 	})
 
@@ -654,11 +654,11 @@ func TestE2E_MultipleTasksManagement(t *testing.T) {
 		// Check that all created tasks are present
 		taskIDs := make(map[string]bool)
 		for _, task := range tasks {
-			taskIDs[task.Id] = true
+			taskIDs[task.Id.String()] = true
 		}
 
 		for _, createdTask := range createdTasks {
-			assert.True(t, taskIDs[createdTask.Id], "Task %s should be present", createdTask.Id)
+			assert.True(t, taskIDs[createdTask.Id.String()], "Task %s should be present", createdTask.Id.String())
 		}
 	})
 
@@ -668,7 +668,7 @@ func TestE2E_MultipleTasksManagement(t *testing.T) {
 		updateRequest := map[string]string{"title": "Updated " + taskToUpdate.Title}
 
 		// Act
-		rec, err := testServer.makeRequest("PUT", "/tasks/"+taskToUpdate.Id, updateRequest, nil)
+		rec, err := testServer.makeRequest("PUT", "/tasks/"+taskToUpdate.Id.String(), updateRequest, nil)
 
 		// Assert
 		require.NoError(t, err)
@@ -686,14 +686,14 @@ func TestE2E_MultipleTasksManagement(t *testing.T) {
 		taskToDelete := createdTasks[0]
 
 		// Act
-		rec, err := testServer.makeRequest("DELETE", "/tasks/"+taskToDelete.Id, nil, nil)
+		rec, err := testServer.makeRequest("DELETE", "/tasks/"+taskToDelete.Id.String(), nil, nil)
 
 		// Assert
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 
 		// Verify it's gone
-		rec, err = testServer.makeRequest("GET", "/tasks/"+taskToDelete.Id, nil, nil)
+		rec, err = testServer.makeRequest("GET", "/tasks/"+taskToDelete.Id.String(), nil, nil)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
