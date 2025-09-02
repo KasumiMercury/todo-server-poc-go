@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -66,6 +67,11 @@ func TestTaskGetAllTasks(t *testing.T) {
 	assert.Len(t, tasks, 2)
 }
 
+// testUUID converts string to openapi_types.UUID for tests
+func testUUID(s string) types.UUID {
+	return types.UUID(uuid.MustParse(s))
+}
+
 func TestTaskCreateTask(t *testing.T) {
 	t.Parallel()
 
@@ -101,7 +107,7 @@ func TestTaskCreateTask(t *testing.T) {
 
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
-	assert.Equal(t, taskID, responseTask.Id)
+	assert.Equal(t, taskID, responseTask.Id.String())
 	assert.Equal(t, "New Task", responseTask.Title)
 }
 
@@ -128,7 +134,7 @@ func TestTaskGetTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := handler.GetTask(c, taskID)
+	err := handler.GetTask(c, testUUID(taskID))
 
 	// Assert
 	assert.NoError(t, err)
@@ -138,7 +144,7 @@ func TestTaskGetTask(t *testing.T) {
 
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
-	assert.Equal(t, taskID, responseTask.Id)
+	assert.Equal(t, taskID, responseTask.Id.String())
 	assert.Equal(t, "Test Task", responseTask.Title)
 }
 
@@ -171,7 +177,7 @@ func TestTaskUpdateTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := handler.UpdateTask(c, taskID)
+	err := handler.UpdateTask(c, testUUID(taskID))
 
 	// Assert
 	assert.NoError(t, err)
@@ -181,7 +187,7 @@ func TestTaskUpdateTask(t *testing.T) {
 
 	err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 	require.NoError(t, err)
-	assert.Equal(t, taskID, responseTask.Id)
+	assert.Equal(t, taskID, responseTask.Id.String())
 	assert.Equal(t, "Updated Task", responseTask.Title)
 }
 
@@ -207,7 +213,7 @@ func TestTaskDeleteTask(t *testing.T) {
 	c.Set("user_id", testUserID)
 
 	// Act
-	err := handler.DeleteTask(c, taskID)
+	err := handler.DeleteTask(c, testUUID(taskID))
 
 	// Assert
 	assert.NoError(t, err)
@@ -314,7 +320,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := handler.GetTask(c, nonExistentTaskID)
+				err := handler.GetTask(c, testUUID(nonExistentTaskID))
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -335,7 +341,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := handler.UpdateTask(c, nonExistentTaskID)
+				err := handler.UpdateTask(c, testUUID(nonExistentTaskID))
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNotFound, rec.Code)
 
@@ -354,7 +360,7 @@ func TestTaskNotFound(t *testing.T) {
 				c := e.NewContext(req, rec)
 				c.Set("user_id", testUserID)
 
-				err := handler.DeleteTask(c, nonExistentTaskID)
+				err := handler.DeleteTask(c, testUUID(nonExistentTaskID))
 				assert.NoError(t, err)
 				assert.Equal(t, http.StatusNoContent, rec.Code)
 
@@ -423,7 +429,7 @@ func TestInvalidJSONRequest(t *testing.T) {
 			case http.MethodPut:
 				parts := strings.Split(tt.url, "/")
 				taskID := parts[len(parts)-1]
-				err = handler.UpdateTask(c, taskID)
+				err = handler.UpdateTask(c, testUUID(taskID))
 			}
 
 			// Assert
@@ -565,11 +571,11 @@ func TestTaskRepositoryErrors(t *testing.T) {
 			case "CreateTask":
 				err = handler.CreateTask(c)
 			case "GetTask":
-				err = handler.GetTask(c, tt.taskID)
+				err = handler.GetTask(c, testUUID(tt.taskID))
 			case "UpdateTask":
-				err = handler.UpdateTask(c, tt.taskID)
+				err = handler.UpdateTask(c, testUUID(tt.taskID))
 			case "DeleteTask":
-				err = handler.DeleteTask(c, tt.taskID)
+				err = handler.DeleteTask(c, testUUID(tt.taskID))
 			}
 
 			// Assert
@@ -853,8 +859,8 @@ func TestTaskConcurrentOperations(t *testing.T) {
 	c2.Set("user_id", testUserID)
 
 	// Act
-	err1 := handler.GetTask(c1, testTaskID)
-	err2 := handler.GetTask(c2, testTaskID)
+	err1 := handler.GetTask(c1, testUUID(testTaskID))
+	err2 := handler.GetTask(c2, testUUID(testTaskID))
 
 	// Assert
 	assert.NoError(t, err1)

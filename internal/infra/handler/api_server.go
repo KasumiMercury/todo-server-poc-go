@@ -1,6 +1,8 @@
 package handler
 
 import (
+	openapiTypes "github.com/oapi-codegen/runtime/types"
+
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 	"github.com/labstack/echo/v4"
@@ -37,16 +39,16 @@ func (s *APIServer) TaskCreateTask(c echo.Context) error {
 }
 
 // TaskDeleteTask implements the ServerInterface for task deletion by delegating to TaskHandler
-func (s *APIServer) TaskDeleteTask(c echo.Context, taskId string) error {
+func (s *APIServer) TaskDeleteTask(c echo.Context, taskId openapiTypes.UUID) error {
 	return s.taskHandler.DeleteTask(c, taskId)
 }
 
 // TaskGetTask implements the ServerInterface for getting a specific task by delegating to TaskHandler
-func (s *APIServer) TaskGetTask(c echo.Context, taskId string) error {
+func (s *APIServer) TaskGetTask(c echo.Context, taskId openapiTypes.UUID) error {
 	return s.taskHandler.GetTask(c, taskId)
 }
 
 // TaskUpdateTask implements the ServerInterface for task updates by delegating to TaskHandler
-func (s *APIServer) TaskUpdateTask(c echo.Context, taskId string) error {
+func (s *APIServer) TaskUpdateTask(c echo.Context, taskId openapiTypes.UUID) error {
 	return s.taskHandler.UpdateTask(c, taskId)
 }

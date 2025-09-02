@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	openapiTypes "github.com/oapi-codegen/runtime/types"
 
 	"github.com/KasumiMercury/todo-server-poc-go/internal/controller"
 	taskDomain "github.com/KasumiMercury/todo-server-poc-go/internal/domain/task"
@@ -14,13 +15,15 @@ import (
 
 // TaskHandler handles HTTP requests for task operations.
 type TaskHandler struct {
-	controller controller.Task
+	controller  controller.Task
+	uuidAdapter *UUIDAdapter
 }
 
 // NewTaskHandler creates a new TaskHandler with the provided controller.
 func NewTaskHandler(ctr controller.Task) *TaskHandler {
 	return &TaskHandler{
-		controller: ctr,
+		controller:  ctr,
+		uuidAdapter: NewUUIDAdapter(),
 	}
 }
 
@@ -72,7 +75,7 @@ func (t *TaskHandler) GetAllTasks(c echo.Context) error {
 
 	for _, task := range tasks {
 		res = append(res, taskHandler.Task{
-			Id:    task.ID().String(),
+			Id:    task.ID().UUID(),
 			Title: task.Title(),
 		})
 	}
@@ -122,14 +125,14 @@ func (t *TaskHandler) CreateTask(c echo.Context) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID().String(),
+		Id:    task.ID().UUID(),
 		Title: task.Title(),
 	}
 
 	return c.JSON(http.StatusCreated, res)
 }
 
-func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) DeleteTask(c echo.Context, taskId openapiTypes.UUID) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
 	userID, err := t.extractUserID(c)
 	if err != nil {
@@ -138,13 +141,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
-	if taskId == "" {
-		details := "taskId path parameter is required"
-
-		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
-	}
-
-	// Convert string userID to domain CreatorID
+	// Convert userID to domain UserID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -152,8 +149,8 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
-	// Convert string taskId to domain TaskID
-	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	// Convert UUID taskId to domain TaskID
+	domainTaskID, err := t.uuidAdapter.ToDomainTaskID(taskId)
 	if err != nil {
 		details := err.Error()
 
@@ -170,7 +167,7 @@ func (t *TaskHandler) DeleteTask(c echo.Context, taskId string) error {
 	return c.JSON(http.StatusNoContent, nil)
 }
 
-func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) GetTask(c echo.Context, taskId openapiTypes.UUID) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
 	userID, err := t.extractUserID(c)
 	if err != nil {
@@ -179,13 +176,7 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
 	}
 
-	if taskId == "" {
-		details := "taskId path parameter is required"
-
-		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
-	}
-
-	// Convert string userID to domain CreatorID
+	// Convert userID to domain UserID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -193,8 +184,8 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
-	// Convert string taskId to domain TaskID
-	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	// Convert UUID taskId to domain TaskID
+	domainTaskID, err := t.uuidAdapter.ToDomainTaskID(taskId)
 	if err != nil {
 		details := err.Error()
 
@@ -217,26 +208,20 @@ func (t *TaskHandler) GetTask(c echo.Context, taskId string) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID().String(),
+		Id:    task.ID().UUID(),
 		Title: task.Title(),
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
-func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
+func (t *TaskHandler) UpdateTask(c echo.Context, taskId openapiTypes.UUID) error {
 	// Extract userID from JWT sub claim (set by JWTMiddleware in jwt.go)
 	userID, err := t.extractUserID(c)
 	if err != nil {
 		details := err.Error()
 
 		return c.JSON(http.StatusUnauthorized, NewUnauthorizedError("Unauthorized", &details))
-	}
-
-	if taskId == "" {
-		details := "taskId path parameter is required"
-
-		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
 	var req taskHandler.TaskUpdate
@@ -247,7 +232,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Bad request", &details))
 	}
 
-	// Convert string userID to domain CreatorID
+	// Convert userID to domain UserID
 	domainUserID, err := user.NewUserID(userID)
 	if err != nil {
 		details := err.Error()
@@ -255,8 +240,8 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 		return c.JSON(http.StatusBadRequest, NewBadRequestError("Invalid user ID format", &details))
 	}
 
-	// Convert string taskId to domain TaskID
-	domainTaskID, err := taskDomain.NewTaskID(taskId)
+	// Convert UUID taskId to domain TaskID
+	domainTaskID, err := t.uuidAdapter.ToDomainTaskID(taskId)
 	if err != nil {
 		details := err.Error()
 
@@ -294,7 +279,7 @@ func (t *TaskHandler) UpdateTask(c echo.Context, taskId string) error {
 	}
 
 	res := taskHandler.Task{
-		Id:    task.ID().String(),
+		Id:    task.ID().UUID(),
 		Title: task.Title(),
 	}
 

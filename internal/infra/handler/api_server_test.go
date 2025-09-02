@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -21,6 +22,11 @@ import (
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/handler/mocks"
 	"github.com/KasumiMercury/todo-server-poc-go/internal/infra/service"
 )
+
+// apiTestUUID converts string to openapi_types.UUID for api_server tests
+func apiTestUUID(s string) types.UUID {
+	return types.UUID(uuid.MustParse(s))
+}
 
 // Helper functions for creating domain objects from strings in tests
 func createTaskID(s string) task.TaskID {
@@ -472,7 +478,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 			}
 
 			// Act
-			err := apiServer.TaskGetTask(c, tt.taskID)
+			err := apiServer.TaskGetTask(c, apiTestUUID(tt.taskID))
 
 			// Assert
 			assert.NoError(t, err)
@@ -484,7 +490,7 @@ func TestAPIServer_TaskGetTask(t *testing.T) {
 				err = json.Unmarshal(rec.Body.Bytes(), &responseTask)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedTitle, responseTask.Title)
-				assert.Equal(t, tt.taskID, responseTask.Id)
+				assert.Equal(t, tt.taskID, responseTask.Id.String())
 			}
 		})
 	}
@@ -592,7 +598,7 @@ func TestAPIServer_TaskUpdateTask(t *testing.T) {
 			}
 
 			// Act
-			err := apiServer.TaskUpdateTask(c, tt.taskID)
+			err := apiServer.TaskUpdateTask(c, apiTestUUID(tt.taskID))
 
 			// Assert
 			assert.NoError(t, err)
@@ -690,7 +696,7 @@ func TestAPIServer_TaskDeleteTask(t *testing.T) {
 			}
 
 			// Act
-			err := apiServer.TaskDeleteTask(c, tt.taskID)
+			err := apiServer.TaskDeleteTask(c, apiTestUUID(tt.taskID))
 
 			// Assert
 			assert.NoError(t, err)

@@ -41,6 +41,11 @@ func (t TaskID) String() string {
 	return t.value.String()
 }
 
+// UUID returns the underlying uuid.UUID value.
+func (t TaskID) UUID() uuid.UUID {
+	return t.value
+}
+
 // IsEmpty returns true if the TaskID is empty.
 func (t TaskID) IsEmpty() bool {
 	return t.value == uuid.Nil
