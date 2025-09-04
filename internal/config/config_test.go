@@ -536,6 +536,8 @@ func TestLoad(t *testing.T) {
 				"JWT_PRIVATE_KEY_FILE": "",
 				"ALLOW_ORIGINS":        "",
 				"SERVICE_NAME":         "",
+				"PORT":                 "",
+				"METRICS_PORT":         "",
 			},
 			wantErr: false,
 		},
@@ -552,6 +554,8 @@ func TestLoad(t *testing.T) {
 				"JWKS_REFRESH_PADDING": "600",
 				"ALLOW_ORIGINS":        "http://example.com,https://app.example.com",
 				"SERVICE_NAME":         "custom-service",
+				"PORT":                 "9000",
+				"METRICS_PORT":         "9001",
 			},
 			wantErr: false,
 		},
@@ -565,6 +569,8 @@ func TestLoad(t *testing.T) {
 				"DB_NAME":      "dbname",
 				"JWT_SECRET":   "secret",
 				"SERVICE_NAME": "todo-server",
+				"PORT":         "8080",
+				"METRICS_PORT": "8081",
 			},
 			wantErr: true,
 		},
@@ -580,6 +586,8 @@ func TestLoad(t *testing.T) {
 				"JWKS_ENDPOINT_URL":    "",
 				"JWT_PRIVATE_KEY_FILE": "",
 				"SERVICE_NAME":         "todo-server",
+				"PORT":                 "8080",
+				"METRICS_PORT":         "8081",
 			},
 			wantErr: true,
 		},
@@ -594,6 +602,8 @@ func TestLoad(t *testing.T) {
 				"JWT_SECRET":          "secret",
 				"JWKS_CACHE_DURATION": "-100",
 				"SERVICE_NAME":        "todo-server",
+				"PORT":                "8080",
+				"METRICS_PORT":        "8081",
 			},
 			wantErr: true,
 		},
@@ -608,6 +618,8 @@ func TestLoad(t *testing.T) {
 				"JWT_SECRET":           "",
 				"JWT_PRIVATE_KEY_FILE": "/nonexistent/private.key",
 				"SERVICE_NAME":         "todo-server",
+				"PORT":                 "8080",
+				"METRICS_PORT":         "8081",
 			},
 			wantErr: true,
 		},
@@ -677,6 +689,110 @@ func TestLoad(t *testing.T) {
 				if config.Database.Host == "" {
 					t.Errorf("Load() Database.Host is empty")
 				}
+
+				if config.Port == "" {
+					t.Errorf("Load() Port is empty")
+				}
+
+				if config.MetricsPort == "" {
+					t.Errorf("Load() MetricsPort is empty")
+				}
+			}
+		})
+	}
+}
+
+func TestLoadPortConfiguration(t *testing.T) {
+	tests := []struct {
+		name                string
+		envVars             map[string]string
+		expectedPort        string
+		expectedMetricsPort string
+	}{
+		{
+			name: "default port values",
+			envVars: map[string]string{
+				"JWT_SECRET":   "test-secret",
+				"PORT":         "",
+				"METRICS_PORT": "",
+			},
+			expectedPort:        "8080",
+			expectedMetricsPort: "8081",
+		},
+		{
+			name: "custom port values",
+			envVars: map[string]string{
+				"JWT_SECRET":   "test-secret",
+				"PORT":         "9000",
+				"METRICS_PORT": "9001",
+			},
+			expectedPort:        "9000",
+			expectedMetricsPort: "9001",
+		},
+		{
+			name: "only PORT set",
+			envVars: map[string]string{
+				"JWT_SECRET":   "test-secret",
+				"PORT":         "3000",
+				"METRICS_PORT": "",
+			},
+			expectedPort:        "3000",
+			expectedMetricsPort: "8081",
+		},
+		{
+			name: "only METRICS_PORT set",
+			envVars: map[string]string{
+				"JWT_SECRET":   "test-secret",
+				"PORT":         "",
+				"METRICS_PORT": "4000",
+			},
+			expectedPort:        "8080",
+			expectedMetricsPort: "4000",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			originalEnv := make(map[string]string)
+			for key, value := range tt.envVars {
+				originalEnv[key] = os.Getenv(key)
+				if value == "" {
+					os.Unsetenv(key)
+				} else {
+					os.Setenv(key, value)
+				}
+			}
+
+			defer func() {
+				for key, originalValue := range originalEnv {
+					if originalValue == "" {
+						os.Unsetenv(key)
+					} else {
+						os.Setenv(key, originalValue)
+					}
+				}
+			}()
+
+			// Act
+			config, err := Load()
+
+			// Assert
+			if err != nil {
+				t.Errorf("Load() unexpected error: %v", err)
+			}
+
+			if config == nil {
+				t.Errorf("Load() returned nil config")
+				return
+			}
+
+			if config.Port != tt.expectedPort {
+				t.Errorf("Load() Port = %v, want %v", config.Port, tt.expectedPort)
+			}
+
+			if config.MetricsPort != tt.expectedMetricsPort {
+				t.Errorf("Load() MetricsPort = %v, want %v", config.MetricsPort, tt.expectedMetricsPort)
 			}
 		})
 	}

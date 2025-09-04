@@ -129,6 +129,8 @@ type Config struct {
 	Auth         AuthConfig
 	AllowOrigins []string
 	ServiceName  string
+	Port         string
+	MetricsPort  string
 }
 
 // Validate validates the entire configuration
@@ -177,6 +179,8 @@ func Load() (*Config, error) {
 		},
 		AllowOrigins: strings.Split(getEnv("ALLOW_ORIGINS", "http://localhost:5173,http://localhost:3000"), ","),
 		ServiceName:  getEnv("SERVICE_NAME", "todo-server"),
+		Port:         getEnv("PORT", "8080"),
+		MetricsPort:  getEnv("METRICS_PORT", "8081"),
 	}
 
 	if err := config.Validate(); err != nil {
