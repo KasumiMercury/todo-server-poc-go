@@ -784,6 +784,7 @@ func TestLoadPortConfiguration(t *testing.T) {
 
 			if config == nil {
 				t.Errorf("Load() returned nil config")
+
 				return
 			}
 
