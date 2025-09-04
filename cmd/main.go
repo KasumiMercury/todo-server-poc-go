@@ -87,7 +87,7 @@ func main() {
 	taskGroup.PUT("/:taskId", wrapper.TaskUpdateTask)
 	taskGroup.DELETE("/:taskId", wrapper.TaskDeleteTask)
 
-	if err := router.Start(":8080"); err != nil {
+	if err := router.Start(":" + cfg.Port); err != nil {
 		log.Fatal("Failed to start server:", err.Error())
 	}
 }
