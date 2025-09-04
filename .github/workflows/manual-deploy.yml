@@ -1,0 +1,50 @@
+name: manual-deploy.yml
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    env:
+      GCP_SERVICE_NAME: todo-poc-cloud-run
+      GCP_REGION: asia-northeast2
+      ARTIFACT_REPO_ID: ${{ secrets.GCP_ARTIFACT_REPO_ID }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - id: "auth"
+        uses: "google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093" # v3.0.0
+        with:
+          workload_identity_provider: "${{ secrets.GOOGLE_IAM_WORKLOAD_IDENTITY_POOL_PROVIDER }}"
+          service_account: "${{ secrets.SERVICE_ACCOUNT_EMAIL }}"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+      - name: Generate tag from GitHub SHA
+        id: generate-tag
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          TAG="manual-${SHORT_SHA}-$(date +%Y%m%d-%H%M%S)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Generated tag: $TAG"
+      - name: 'Build and Push Container Image'
+        run: |
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ steps.generate-tag.outputs.tag }}"
+          
+          docker build -t $IMAGE_PATH .
+          docker push $IMAGE_PATH
+          
+          echo "Image pushed to: $IMAGE_PATH"
+#      - name: 'Deploy to Cloud Run'
+#        uses: 'google-github-actions/deploy-cloudrun@v2'
+#        with:
+#          service: ${{ env.GCP_SERVICE_NAME }}
+#          region: ${{ env.GCP_REGION }}
+#          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ steps.generate-tag.outputs.tag }}
