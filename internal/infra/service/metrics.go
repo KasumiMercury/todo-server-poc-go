@@ -16,7 +16,7 @@ type MetricsService struct {
 func NewMetricsService(cfg config.Config) *MetricsService {
 	return &MetricsService{
 		cfg:        cfg,
-		metricPort: ":8081",
+		metricPort: ":" + cfg.MetricsPort,
 	}
 }
 
