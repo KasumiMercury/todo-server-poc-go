@@ -18,7 +18,7 @@ require (
 	go.uber.org/mock v0.6.0
 	golang.org/x/net v0.43.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.30.3
+	gorm.io/gorm v1.30.5
 )
 
 require (
