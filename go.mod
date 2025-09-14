@@ -18,7 +18,7 @@ require (
 	go.uber.org/mock v0.6.0
 	golang.org/x/net v0.44.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.30.5
+	gorm.io/gorm v1.31.0
 )
 
 require (
@@ -167,7 +167,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
-	gorm.io/driver/sqlite v1.5.7 // indirect
+	gorm.io/driver/sqlite v1.6.0 // indirect
 	gorm.io/driver/sqlserver v1.5.4 // indirect
 )
 
