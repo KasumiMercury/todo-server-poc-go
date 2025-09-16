@@ -5,5 +5,7 @@
   ],
   "git-submodules": {
     "enabled": true
-  }
+  },
+  "minimumReleaseAge": "1 days",
+  "internalChecksFilter": "strict"
 }
