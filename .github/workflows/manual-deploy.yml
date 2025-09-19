@@ -36,7 +36,7 @@ jobs:
           echo "Generated tag: $TAG"
       - name: 'Build and Push Container Image'
         run: |
-          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ steps.generate-tag.outputs.tag }}"
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task:${{ steps.generate-tag.outputs.tag }}"
           
           docker build -t $IMAGE_PATH .
           docker push $IMAGE_PATH
