@@ -30,15 +30,24 @@ jobs:
         uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
-      - name: 'Build and Push Container Image'
-        run: |
-          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.ref_name }}"
-          
-          docker build -t $IMAGE_PATH .
-          docker push $IMAGE_PATH
-#      - name: 'Deploy to Cloud Run'
-#        uses: 'google-github-actions/deploy-cloudrun@v2'
-#        with:
-#          service: ${{ env.GCP_SERVICE_NAME }}
-#          region: ${{ env.GCP_REGION }}
-#          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.ref_name }}
+      - name: Set image path
+        run: echo "IMAGE_PATH=${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.ref_name }}" >> "$GITHUB_ENV"
+
+      - name: Build container image
+        run: docker build -t "$IMAGE_PATH" .
+
+      - name: Generate SBOM (CycloneDX JSON)
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
+        with:
+          image: ${{ env.IMAGE_PATH }}
+          format: cyclonedx-json
+          output-file: sbom-${{ github.ref_name }}.cyclonedx.json
+
+      - name: Push container image
+        run: docker push "$IMAGE_PATH"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: sbom-${{ github.ref_name }}
+          path: sbom-${{ github.ref_name }}.cyclonedx.json
