@@ -45,13 +45,13 @@ jobs:
           images: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task
           tags: |
             type=raw,value=${{ steps.generate-tag.outputs.tag }}
-            type=sha,format=long
 
       - name: Build and push container image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -63,5 +63,5 @@ jobs:
         with:
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task:${{ steps.generate-tag.outputs.tag }}
           format: cyclonedx-json
-          output-file: sbom-${{ github.ref_name }}.cyclonedx.json
-          artifact-name: sbom-${{ github.ref_name }}.cyclonedx.json
+          output-file: sbom-${{ steps.generate-tag.outputs.tag }}.cyclonedx.json
+          artifact-name: sbom-${{ steps.generate-tag.outputs.tag }}.cyclonedx.json
