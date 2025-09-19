@@ -42,8 +42,6 @@ jobs:
           image: ${{ env.IMAGE_PATH }}
           format: cyclonedx-json
           output-file: sbom-${{ github.ref_name }}.cyclonedx.json
-          upload-artifact: false
-          upload-release-assets: true
           artifact-name: sbom-${{ github.ref_name }}.cyclonedx.json
 
       - name: Push container image
