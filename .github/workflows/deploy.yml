@@ -21,28 +21,64 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - id: "auth"
+      - name: Authenticate to Google Cloud
+        id: "auth"
         uses: "google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093" # v3.0.0
         with:
+          token_format: access_token
           workload_identity_provider: "${{ secrets.GOOGLE_IAM_WORKLOAD_IDENTITY_POOL_PROVIDER }}"
           service_account: "${{ secrets.SERVICE_ACCOUNT_EMAIL }}"
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-      - name: Configure Docker
-        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
-      - name: Set image path
-        run: echo "IMAGE_PATH=${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task:${{ github.ref_name }}" >> "$GITHUB_ENV"
+      - name: Login to GAR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GCP_REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=${{ github.ref_name }}
+            type=raw,value=latest
+            type=sha
 
-      - name: Build container image
-        run: docker build -t "$IMAGE_PATH" .
+      - name: Build and push container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-to: type=gha
+          cache-from: type=gha,mode=max
+
+      - name: Determine SBOM image reference
+        id: sbom-image
+        run: |
+          set -eo pipefail
+          mapfile -t images < <(printf '%s\n' "${{ steps.meta.outputs.tags }}")
+          for image in "${images[@]}"; do
+            if [[ "$image" == *":sha-"* ]]; then
+              echo "image=$image" >> "$GITHUB_OUTPUT"
+              safe_name=${image//[\/]/-}
+              safe_name=${safe_name//:/-}
+              echo "safe_name=$safe_name" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "image=${images[0]}" >> "$GITHUB_OUTPUT"
+          safe_name=${images[0]//[\/]/-}
+          safe_name=${safe_name//:/-}
+          echo "safe_name=$safe_name" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
         with:
-          image: ${{ env.IMAGE_PATH }}
+          image: ${{ steps.sbom-image.outputs.image }}
           format: cyclonedx-json
-          output-file: sbom-${{ github.ref_name }}.cyclonedx.json
-          artifact-name: sbom-${{ github.ref_name }}.cyclonedx.json
-
-      - name: Push container image
-        run: docker push "$IMAGE_PATH"
+          output-file: sbom-${{ steps.sbom-image.outputs.safe_name }}.cyclonedx.json
+          artifact-name: sbom-${{ steps.sbom-image.outputs.safe_name }}.cyclonedx.json
