@@ -37,7 +37,7 @@ jobs:
         run: docker build -t "$IMAGE_PATH" .
 
       - name: Generate SBOM (CycloneDX JSON)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
         with:
           image: ${{ env.IMAGE_PATH }}
           format: cyclonedx-json
@@ -47,7 +47,7 @@ jobs:
         run: docker push "$IMAGE_PATH"
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4.3.3
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: sbom-${{ github.ref_name }}
           path: sbom-${{ github.ref_name }}.cyclonedx.json
