@@ -51,9 +51,3 @@ jobs:
         with:
           name: sbom-${{ github.ref_name }}
           path: sbom-${{ github.ref_name }}.cyclonedx.json
-#      - name: 'Deploy to Cloud Run'
-#        uses: 'google-github-actions/deploy-cloudrun@v2'
-#        with:
-#          service: ${{ env.GCP_SERVICE_NAME }}
-#          region: ${{ env.GCP_REGION }}
-#          image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID_PROD }}/${{ env.ARTIFACT_REPO_ID }}/todo-poc-server:${{ github.ref_name }}
