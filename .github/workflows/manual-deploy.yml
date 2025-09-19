@@ -47,6 +47,7 @@ jobs:
           images: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task
           tags: |
             type=raw,value=${{ steps.generate-tag.outputs.tag }}
+            type=sha
 
       - name: Build and push container image
         uses: docker/build-push-action@v6
