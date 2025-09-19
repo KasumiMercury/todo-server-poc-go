@@ -52,10 +52,23 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Determine SBOM image reference
+        id: sbom-image
+        run: |
+          set -eo pipefail
+          mapfile -t images < <(printf '%s\n' "${{ steps.meta.outputs.tags }}")
+          for image in "${images[@]}"; do
+            if [[ "$image" == *":sha-"* ]]; then
+              echo "image=$image" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "image=${images[0]}" >> "$GITHUB_OUTPUT"
+
       - name: Generate SBOM (CycloneDX JSON)
         uses: anchore/sbom-action@f8bdd1d8ac5e901a77a92f111440fdb1b593736b # v0.20.6
         with:
-          image: ${{ steps.meta.outputs.tags }}
+          image: ${{ steps.sbom-image.outputs.image }}
           format: cyclonedx-json
           output-file: sbom-${{ github.ref_name }}.cyclonedx.json
           artifact-name: sbom-${{ github.ref_name }}.cyclonedx.json
