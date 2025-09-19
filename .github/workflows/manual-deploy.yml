@@ -54,6 +54,8 @@ jobs:
           load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-to: type=gha
+          cache-from: type=gha,mode=max
 
       - name: Display image reference
         run: |
