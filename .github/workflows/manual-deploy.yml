@@ -65,7 +65,7 @@ jobs:
         run: |
           echo "Image pushed to: ${{ steps.meta.outputs.tags }}"
       - name: Generate SBOM (CycloneDX JSON)
-        uses: anchore/sbom-action@d8a2c0130026bf585de5c176ab8f7ce62d75bf04 # v0.20.7
+        uses: anchore/sbom-action@aa0e114b2e19480f157109b9922bda359bd98b90 # v0.20.8
         with:
           image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REPO_ID }}/todo-task:${{ steps.generate-tag.outputs.tag }}
           format: cyclonedx-json
